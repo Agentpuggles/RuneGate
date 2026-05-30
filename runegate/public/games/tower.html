@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind Tower</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #050510; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: 'Courier New', monospace; color: #00d4ff; overflow: hidden; }
+  #level { font-size: 16px; margin-bottom: 15px; text-shadow: 0 0 10px rgba(0,212,255,0.5); }
+  #puzzle { font-size: 28px; letter-spacing: 8px; margin-bottom: 20px; text-shadow: 0 0 10px rgba(123,47,247,0.5); }
+  #input-area { display: flex; gap: 5px; margin-bottom: 20px; }
+  .guess-cell { width: 40px; height: 40px; text-align: center; font-size: 20px; font-family: 'Courier New', monospace; background: rgba(13,13,43,0.9); border: 2px solid rgba(0,212,255,0.3); border-radius: 8px; color: #00d4ff; outline: none; text-transform: uppercase; }
+  .guess-cell:focus { border-color: rgba(0,212,255,0.7); box-shadow: 0 0 10px rgba(0,212,255,0.2); }
+  #feedback { min-height: 80px; max-height: 200px; overflow-y: auto; margin-bottom: 15px; width: 300px; text-align: center; }
+  .hint { font-size: 13px; padding: 4px; }
+  .correct { color: #00ff88; }
+  .partial { color: #ffd700; }
+  .wrong { color: #ff3366; }
+  #overlay { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(5,5,16,0.9); padding: 30px; border-radius: 12px; border: 1px solid rgba(0,212,255,0.3); z-index: 10; }
+  #overlay h2 { margin-bottom: 10px; text-shadow: 0 0 15px rgba(0,212,255,0.5); }
+  #overlay p { font-size: 14px; color: #6b7280; margin-bottom: 15px; text-align: center; }
+  #overlay button { padding: 10px 30px; background: rgba(0,212,255,0.2); border: 1px solid rgba(0,212,255,0.5); color: #00d4ff; font-family: 'Courier New', monospace; font-size: 16px; border-radius: 8px; cursor: pointer; }
+  button:hover { background: rgba(0,212,255,0.3); }
+  .key-btn { width: 36px; height: 36px; font-size: 14px; font-family: 'Courier New', monospace; background: rgba(13,13,43,0.9); border: 1px solid rgba(0,212,255,0.2); color: #6b7280; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+  .key-btn:hover { border-color: rgba(0,212,255,0.5); color: #00d4ff; }
+  .key-btn.correct { background: rgba(0,255,136,0.2); border-color: #00ff88; color: #00ff88; }
+  .key-btn.partial { background: rgba(255,215,0,0.2); border-color: #ffd700; color: #ffd700; }
+  .key-btn.wrong { background: rgba(255,51,102,0.1); border-color: rgba(255,51,102,0.3); color: #ff3366; opacity: 0.5; }
+  #keyboard { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; max-width: 400px; }
+</style>
+</head>
+<body>
+  <div id="level">🗼 Tower Floor 1 — Guess the 4-letter word</div>
+  <div id="puzzle">_ _ _ _</div>
+  <div id="feedback"></div>
+  <div id="input-area">
+    <input class="guess-cell" maxlength="1" data-idx="0" />
+    <input class="guess-cell" maxlength="1" data-idx="1" />
+    <input class="guess-cell" maxlength="1" data-idx="2" />
+    <input class="guess-cell" maxlength="1" data-idx="3" />
+  </div>
+  <button onclick="submitGuess()" style="padding:10px 30px;background:rgba(0,212,255,0.2);border:1px solid rgba(0,212,255,0.5);color:#00d4ff;font-family:'Courier New',monospace;font-size:14px;border-radius:8px;cursor:pointer;margin-bottom:15px;">Check Spell</button>
+  <div id="keyboard"></div>
+
+  <script>
+    const words = ['RUNE','GATE','MAGE','SPELL','VOID','DARK','FIRE','GOLD','CUBE','FIRE','BOLT','MYTH','LORE','HERO','RAID','DICE','WARP','FLUX','NOVA','ZEAL','DUSK','RISE','BANE','FURY','GLYPH','TOME','ARCANE','STAFF'];
+    const fourLetterWords = words.filter(w => w.length === 4);
+    let target, guesses, maxGuesses, currentLevel, keysStatus;
+
+    function init() {
+      target = fourLetterWords[Math.floor(Math.random()*fourLetterWords.length)];
+      guesses = [];
+      maxGuesses = 6;
+      currentLevel = 1;
+      keysStatus = {};
+      updateDisplay();
+      buildKeyboard();
+    }
+
+    function updateDisplay() {
+      document.getElementById('level').textContent = `🗼 Tower Floor ${currentLevel} — Guess the 4-letter word (${maxGuesses - guesses.length} attempts left)`;
+      document.getElementById('puzzle').textContent = '_ _ _ _';
+      document.getElementById('feedback').innerHTML = guesses.map(g => {
+        return `<div class="hint">${g.map(l => `<span class="${l.status}">${l.letter}</span>`).join(' ')}</div>`;
+      }).join('');
+      clearInputs();
+    }
+
+    function clearInputs() {
+      document.querySelectorAll('.guess-cell').forEach(inp => inp.value = '');
+      document.querySelector('.guess-cell[data-idx="0"]').focus();
+    }
+
+    function buildKeyboard() {
+      const kb = document.getElementById('keyboard');
+      kb.innerHTML = 'QWERTYUIOPASDFGHJKLZXCVBNM'.split('').map(l =>
+        `<button class="key-btn ${keysStatus[l]||''}" onclick="typeKey('${l}')">${l}</button>`
+      ).join('');
+    }
+
+    function typeKey(l) {
+      const inputs = document.querySelectorAll('.guess-cell');
+      for (let inp of inputs) {
+        if (!inp.value) { inp.value = l; break; }
+      }
+    }
+
+    function submitGuess() {
+      const inputs = document.querySelectorAll('.guess-cell');
+      const guess = Array.from(inputs).map(i => i.value.toUpperCase()).join('');
+      if (guess.length < 4) return;
+
+      const result = guess.split('').map((l, i) => {
+        let status = 'wrong';
+        if (l === target[i]) status = 'correct';
+        else if (target.includes(l)) status = 'partial';
+        keysStatus[l] = status === 'correct' ? 'correct' : status === 'partial' && keysStatus[l] !== 'correct' ? 'partial' : keysStatus[l] || (status === 'wrong' ? 'wrong' : '');
+        return { letter: l, status };
+      });
+
+      guesses.push(result);
+      buildKeyboard();
+
+      if (guess === target) {
+        document.getElementById('level').textContent = `🏆 Correct! Ascending to floor ${currentLevel + 1}...`;
+        setTimeout(() => {
+          currentLevel++;
+          target = fourLetterWords[Math.floor(Math.random()*fourLetterWords.length)];
+          guesses = [];
+          maxGuesses = 6;
+          updateDisplay();
+          buildKeyboard();
+        }, 1500);
+      } else if (guesses.length >= maxGuesses) {
+        document.getElementById('level').textContent = `💀 The word was: ${target}. Game Over at Floor ${currentLevel}.`;
+        document.getElementById('puzzle').textContent = target.split('').join(' ');
+      }
+
+      document.getElementById('feedback').innerHTML = guesses.map(g =>
+        `<div class="hint">${g.map(l => `<span class="${l.status}">${l.letter}</span>`).join(' ')}</div>`
+      ).join('');
+      clearInputs();
+    }
+
+    // Input navigation
+    document.querySelectorAll('.guess-cell').forEach((inp, i, all) => {
+      inp.addEventListener('input', () => {
+        if (inp.value && i < all.length - 1) all[i + 1].focus();
+      });
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !inp.value && i > 0) all[i - 1].focus();
+        if (e.key === 'Enter') submitGuess();
+      });
+    });
+
+    init();
+  </script>
+</body>
+</html>

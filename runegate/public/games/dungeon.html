@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dungeon Depths</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #050510;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-family: 'Courier New', monospace;
+    color: #7b2ff7;
+    overflow: hidden;
+  }
+  #game {
+    width: 600px;
+    max-width: 95vw;
+    background: linear-gradient(135deg, #0a0a1a, #0d0d2b);
+    border: 1px solid rgba(123,47,247,0.3);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 0 40px rgba(123,47,247,0.1);
+  }
+  #log {
+    height: 300px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(5,5,16,0.5);
+    border-radius: 8px;
+    border: 1px solid rgba(123,47,247,0.1);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  #log .event { color: #6b7280; }
+  #log .damage { color: #ff3366; }
+  #log .heal { color: #00ff88; }
+  #log .loot { color: #ffd700; }
+  #log .combat { color: #ff6b35; }
+  #log .system { color: #00d4ff; }
+  #log .boss { color: #7b2ff7; text-shadow: 0 0 8px rgba(123,47,247,0.5); }
+  #stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  .stat-box {
+    padding: 8px;
+    background: rgba(5,5,16,0.5);
+    border-radius: 8px;
+    border: 1px solid rgba(123,47,247,0.15);
+    text-align: center;
+  }
+  .stat-box .label { font-size: 10px; color: #6b7280; text-transform: uppercase; }
+  .stat-box .value { font-size: 18px; color: #7b2ff7; text-shadow: 0 0 8px rgba(123,47,247,0.5); }
+  #hp-bar { width: 100%; height: 12px; background: rgba(255,51,102,0.15); border-radius: 6px; overflow: hidden; margin-top: 8px; }
+  #hp-fill { height: 100%; background: linear-gradient(90deg, #ff3366, #ff6b35); border-radius: 6px; transition: width 0.3s; }
+  #actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .action-btn {
+    padding: 10px;
+    background: rgba(123,47,247,0.15);
+    border: 1px solid rgba(123,47,247,0.3);
+    color: #b794f6;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .action-btn:hover { background: rgba(123,47,247,0.25); box-shadow: 0 0 15px rgba(123,47,247,0.2); }
+  .action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  #monster {
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 40px;
+    background: rgba(123,47,247,0.05);
+    border-radius: 8px;
+  }
+  #monster .name { font-size: 14px; color: #ff3366; }
+</style>
+</head>
+<body>
+  <div id="game">
+    <div id="monster">🏰 <div class="name">Dungeon Entrance — Floor 1</div></div>
+    <div id="stats">
+      <div class="stat-box"><div class="label">HP</div><div class="value" id="hpVal">100</div></div>
+      <div class="stat-box"><div class="label">Gold</div><div class="value" id="goldVal">0</div></div>
+      <div class="stat-box"><div class="label">Floor</div><div class="value" id="floorVal">1</div></div>
+    </div>
+    <div id="hp-bar"><div id="hp-fill" style="width:100%"></div></div>
+    <div id="log"></div>
+    <div id="actions">
+      <button class="action-btn" onclick="explore()">⚔️ Explore</button>
+      <button class="action-btn" onclick="rest()">💚 Rest</button>
+      <button class="action-btn" onclick="usePotion()">🧪 Potion (<span id="potCount">3</span>)</button>
+    </div>
+  </div>
+
+  <script>
+    const logEl = document.getElementById('log');
+    let hp, maxHp, gold, floor, potions, atk, def, inCombat, monster;
+
+    const monsters = [
+      {name:'Shadow Rat',emoji:'🐀',hp:15,atk:4,def:1,gold:5,xp:10},
+      {name:'Goblin Scout',emoji:'👺',hp:25,atk:6,def:2,gold:10,xp:20},
+      {name:'Skeleton Knight',emoji:'💀',hp:35,atk:8,def:4,gold:15,xp:30},
+      {name:'Dark Slime',emoji:'🟢',hp:20,atk:5,def:3,gold:8,xp:15},
+      {name:'Cave Spider',emoji:'🕷️',hp:18,atk:7,def:1,gold:7,xp:12},
+      {name:'Wraith',emoji:'👻',hp:30,atk:10,def:3,gold:20,xp:35},
+      {name:'Fire Elemental',emoji:'🔥',hp:40,atk:12,def:5,gold:25,xp:40},
+      {name:'Stone Golem',emoji:'🗿',hp:50,atk:8,def:8,gold:30,xp:45},
+    ];
+
+    const bosses = [
+      {name:'Dungeon Lord',emoji:'👹',hp:80,atk:14,def:6,gold:100,xp:100},
+      {name:'Ancient Dragon',emoji:'🐉',hp:120,atk:18,def:8,gold:200,xp:150},
+    ];
+
+    const events = [
+      'You find a hidden passage...',
+      'Strange runes glow on the wall...',
+      'A cold wind blows through the corridor...',
+      'You hear distant footsteps...',
+      'The dungeon trembles slightly...',
+    ];
+
+    const loot = ['Rusty Sword (+2 ATK)','Leather Shield (+2 DEF)','Health Crystal','Mystic Amulet','Bag of Gold'];
+
+    function init() {
+      hp = 100; maxHp = 100; gold = 0; floor = 1; potions = 3;
+      atk = 8; def = 4; inCombat = false; monster = null;
+      logEl.innerHTML = '';
+      updateUI();
+      log('You descend into the dungeon depths...', 'system');
+      log('Type actions: Explore, Rest, or use Potions.', 'system');
+    }
+
+    function log(msg, cls='event') {
+      logEl.innerHTML += `<div class="${cls}">${msg}</div>`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function updateUI() {
+      document.getElementById('hpVal').textContent = hp;
+      document.getElementById('goldVal').textContent = gold;
+      document.getElementById('floorVal').textContent = floor;
+      document.getElementById('hp-fill').style.width = `${(hp/maxHp)*100}%`;
+      document.getElementById('potCount').textContent = potions;
+    }
+
+    function explore() {
+      if (inCombat) { log('You must fight the monster first!', 'combat'); return; }
+      if (hp <= 0) return;
+
+      const roll = Math.random();
+      if (roll < 0.5) {
+        // Combat
+        const pool = floor % 5 === 0 ? bosses : monsters;
+        monster = {...pool[Math.floor(Math.random()*pool.length)]};
+        monster.maxHp = monster.hp;
+        inCombat = true;
+        document.getElementById('monster').innerHTML = `${monster.emoji} <div class="name">${monster.name} — HP: ${monster.hp}</div>`;
+        log(`⚔️ A ${monster.name} appears!`, 'combat');
+        combat();
+      } else if (roll < 0.7) {
+        log(events[Math.floor(Math.random()*events.length)], 'event');
+        // Find loot
+        if (Math.random() < 0.4) {
+          const item = loot[Math.floor(Math.random()*loot.length)];
+          log(`💰 You found: ${item}`, 'loot');
+          if (item.includes('ATK')) atk += 2;
+          if (item.includes('DEF')) def += 2;
+          if (item.includes('Gold')) gold += 20;
+          if (item.includes('Crystal')) maxHp += 10;
+          if (item.includes('Potion')) potions++;
+        } else {
+          gold += Math.floor(Math.random()*10)+1;
+          log(`Found some gold.`, 'loot');
+        }
+      } else if (roll < 0.85) {
+        log('You discover stairs leading deeper...', 'system');
+        floor++;
+        log(`⬇️ Descended to Floor ${floor}.`, 'system');
+        maxHp += 5;
+        hp = Math.min(hp + 10, maxHp);
+        document.getElementById('monster').innerHTML = `🏰 <div class="name">Floor ${floor}</div>`;
+      } else {
+        const dmg = Math.floor(Math.random()*5)+3;
+        hp -= dmg;
+        log(`⚠️ Trap! You take ${dmg} damage.`, 'damage');
+      }
+
+      if (hp <= 0) {
+        hp = 0;
+        log('💀 You have perished in the dungeon...', 'damage');
+        log(`Final: Floor ${floor}, ${gold} gold`, 'system');
+      }
+      updateUI();
+    }
+
+    function combat() {
+      const playerDmg = Math.max(1, atk - monster.def + Math.floor(Math.random()*4)-2);
+      const monsterDmg = Math.max(1, monster.atk - def + Math.floor(Math.random()*4)-2);
+      monster.hp -= playerDmg;
+      log(`You strike for ${playerDmg} damage!`, 'combat');
+
+      if (monster.hp <= 0) {
+        log(`🏆 ${monster.name} defeated! +${monster.gold} gold, +${monster.xp} XP`, 'loot');
+        gold += monster.gold;
+        inCombat = false;
+        document.getElementById('monster').innerHTML = `🏰 <div class="name">Floor ${floor}</div>`;
+        if (Math.random() < 0.3) { potions++; log('Found a potion!', 'loot'); }
+        return;
+      }
+
+      hp -= monsterDmg;
+      log(`${monster.name} hits you for ${monsterDmg}!`, 'damage');
+      document.getElementById('monster').innerHTML = `${monster.emoji} <div class="name">${monster.name} — HP: ${monster.hp}/${monster.maxHp}</div>`;
+
+      if (hp <= 0) {
+        hp = 0;
+        log('💀 You have perished...', 'damage');
+        log(`Final: Floor ${floor}, ${gold} gold`, 'system');
+      }
+      updateUI();
+    }
+
+    function rest() {
+      if (inCombat) { log('Cannot rest during combat!', 'combat'); return; }
+      const heal = Math.floor(Math.random()*10)+5;
+      hp = Math.min(hp + heal, maxHp);
+      log(`💚 You rest and recover ${heal} HP.`, 'heal');
+      updateUI();
+    }
+
+    function usePotion() {
+      if (potions <= 0) { log('No potions left!', 'event'); return; }
+      potions--;
+      const heal = 30;
+      hp = Math.min(hp + heal, maxHp);
+      log(`🧪 Used potion. +${heal} HP.`, 'heal');
+      updateUI();
+    }
+
+    init();
+  </script>
+</body>
+</html>

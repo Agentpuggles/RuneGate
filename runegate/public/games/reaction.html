@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reaction Bolt</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #050510; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: 'Courier New', monospace; color: #ffd700; overflow: hidden; }
+  #score-display { font-size: 18px; margin-bottom: 15px; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+  #arena {
+    width: 500px; height: 400px; position: relative;
+    background: rgba(13,13,43,0.5);
+    border: 2px solid rgba(255,215,0,0.2);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .bolt {
+    position: absolute;
+    font-size: 30px;
+    cursor: pointer;
+    transition: transform 0.1s;
+    animation: appear 0.3s ease-out;
+  }
+  .bolt:hover { transform: scale(1.2); }
+  @keyframes appear { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  #overlay { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(5,5,16,0.9); padding: 30px; border-radius: 12px; border: 1px solid rgba(255,215,0,0.3); z-index: 10; }
+  #overlay h2 { margin-bottom: 10px; text-shadow: 0 0 15px rgba(255,215,0,0.5); }
+  #overlay p { font-size: 14px; color: #6b7280; margin-bottom: 15px; text-align: center; }
+  #overlay button { padding: 10px 30px; background: rgba(255,215,0,0.2); border: 1px solid rgba(255,215,0,0.5); color: #ffd700; font-family: 'Courier New', monospace; font-size: 16px; border-radius: 8px; cursor: pointer; }
+  #overlay button:hover { background: rgba(255,215,0,0.3); }
+  #timer { font-size: 14px; color: #ff3366; margin-top: 8px; }
+</style>
+</head>
+<body>
+  <div id="score-display">⚡ Score: 0 | Time: 30s</div>
+  <div id="arena"></div>
+  <div id="timer"></div>
+  <div id="overlay">
+    <h2>⚡ Reaction Bolt</h2>
+    <p>Click the lightning runes before they fade!</p>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+
+  <script>
+    const arena = document.getElementById('arena');
+    let score, timeLeft, gameActive, spawnInterval, timerInterval;
+
+    function startGame() {
+      document.getElementById('overlay').style.display = 'none';
+      score = 0;
+      timeLeft = 30;
+      gameActive = true;
+      arena.innerHTML = '';
+      updateDisplay();
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateDisplay();
+        if (timeLeft <= 0) endGame();
+      }, 1000);
+
+      spawnBolt();
+    }
+
+    function spawnBolt() {
+      if (!gameActive) return;
+      const bolt = document.createElement('div');
+      bolt.className = 'bolt';
+      const symbols = ['⚡','✨','🔥','💎','⭐','🌟'];
+      bolt.textContent = symbols[Math.floor(Math.random()*symbols.length)];
+      bolt.style.left = Math.random()*420 + 20 + 'px';
+      bolt.style.top = Math.random()*320 + 20 + 'px';
+
+      bolt.addEventListener('click', () => {
+        score++;
+        bolt.remove();
+        updateDisplay();
+      });
+
+      arena.appendChild(bolt);
+
+      // Auto remove after random time
+      const lifetime = Math.max(600, 2000 - score * 50);
+      setTimeout(() => {
+        if (bolt.parentNode) bolt.remove();
+      }, lifetime);
+
+      const interval = Math.max(300, 1000 - score * 20);
+      setTimeout(spawnBolt, interval);
+    }
+
+    function updateDisplay() {
+      document.getElementById('score-display').textContent = `⚡ Score: ${score} | Time: ${timeLeft}s`;
+    }
+
+    function endGame() {
+      gameActive = false;
+      clearInterval(timerInterval);
+      arena.innerHTML = '';
+      document.getElementById('overlay').style.display = 'flex';
+      document.getElementById('overlay').innerHTML = `
+        <h2>⏱ Time's Up!</h2>
+        <p>You caught ${score} bolts!</p>
+        <button onclick="startGame()">Play Again</button>
+      `;
+    }
+  </script>
+</body>
+</html>

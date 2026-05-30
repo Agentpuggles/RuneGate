@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic Tac Rune</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #050510;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100vh; font-family: 'Courier New', monospace; color: #00d4ff; overflow: hidden;
+  }
+  #status { font-size: 20px; margin-bottom: 20px; text-shadow: 0 0 10px rgba(0,212,255,0.5); min-height: 30px; }
+  #board {
+    display: grid; grid-template-columns: repeat(3, 100px); gap: 8px;
+  }
+  .cell {
+    width: 100px; height: 100px;
+    background: rgba(13,13,43,0.9);
+    border: 2px solid rgba(0,212,255,0.3);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px; cursor: pointer;
+    transition: all 0.3s;
+  }
+  .cell:hover { border-color: rgba(0,212,255,0.6); background: rgba(0,212,255,0.05); }
+  .cell.x { color: #00d4ff; text-shadow: 0 0 15px rgba(0,212,255,0.5); }
+  .cell.o { color: #ff3366; text-shadow: 0 0 15px rgba(255,51,102,0.5); }
+  .cell.win { border-color: #ffd700; box-shadow: 0 0 20px rgba(255,215,0,0.3); }
+  #info { margin-top: 20px; font-size: 14px; }
+  button {
+    margin-top: 15px; padding: 10px 30px;
+    background: rgba(0,212,255,0.2); border: 1px solid rgba(0,212,255,0.5);
+    color: #00d4ff; font-family: 'Courier New', monospace; font-size: 14px;
+    border-radius: 8px; cursor: pointer;
+  }
+  button:hover { background: rgba(0,212,255,0.3); }
+</style>
+</head>
+<body>
+  <div id="status">⚡ Your turn — Place a Rune (X)</div>
+  <div id="board"></div>
+  <div id="info">You (❄️) vs AI (🔥)</div>
+  <button onclick="resetGame()">New Game</button>
+
+  <script>
+    const boardEl = document.getElementById('board');
+    const statusEl = document.getElementById('status');
+    let board, gameOver, human, ai;
+
+    function init() {
+      board = Array(9).fill(null);
+      gameOver = false;
+      human = 'X';
+      ai = 'O';
+      render();
+      statusEl.textContent = '⚡ Your turn — Place a Rune (X)';
+    }
+
+    function render() {
+      boardEl.innerHTML = '';
+      board.forEach((val, i) => {
+        const cell = document.createElement('div');
+        cell.className = `cell ${val ? val.toLowerCase() : ''}`;
+        cell.textContent = val === 'X' ? '❄️' : val === 'O' ? '🔥' : '';
+        cell.addEventListener('click', () => makeMove(i));
+        boardEl.appendChild(cell);
+      });
+    }
+
+    function makeMove(i) {
+      if (board[i] || gameOver) return;
+      board[i] = human;
+      render();
+      if (checkWin(human)) { statusEl.textContent = '🏆 You win!'; endGame(); return; }
+      if (board.every(c=>c)) { statusEl.textContent = '🤝 Draw!'; endGame(); return; }
+
+      statusEl.textContent = '🤔 AI thinking...';
+      setTimeout(() => {
+        aiMove();
+        render();
+        if (checkWin(ai)) { statusEl.textContent = '💀 AI wins!'; endGame(); return; }
+        if (board.every(c=>c)) { statusEl.textContent = '🤝 Draw!'; endGame(); return; }
+        statusEl.textContent = '⚡ Your turn';
+      }, 300);
+    }
+
+    function aiMove() {
+      // Simple minimax-ish
+      let bestScore = -Infinity, bestMove = -1;
+      board.forEach((v,i) => {
+        if (!v) {
+          board[i] = ai;
+          let s = minimax(board, 0, false);
+          board[i] = null;
+          if (s > bestScore) { bestScore = s; bestMove = i; }
+        }
+      });
+      if (bestMove >= 0) board[bestMove] = ai;
+    }
+
+    function minimax(b, depth, isMax) {
+      if (checkWin(ai)) return 10 - depth;
+      if (checkWin(human)) return depth - 10;
+      if (b.every(c=>c)) return 0;
+      if (isMax) {
+        let best = -Infinity;
+        b.forEach((v,i) => { if (!v) { b[i]=ai; best=Math.max(best,minimax(b,depth+1,false)); b[i]=null; } });
+        return best;
+      } else {
+        let best = Infinity;
+        b.forEach((v,i) => { if (!v) { b[i]=human; best=Math.min(best,minimax(b,depth+1,true)); b[i]=null; } });
+        return best;
+      }
+    }
+
+    function checkWin(p) {
+      const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+      return wins.some(w => w.every(i => board[i] === p));
+    }
+
+    function endGame() {
+      gameOver = true;
+      const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+      const winLine = wins.find(w => w.every(i => board[i] === board[w[0]] && board[w[0]]));
+      if (winLine) {
+        const cells = boardEl.children;
+        winLine.forEach(i => cells[i].classList.add('win'));
+      }
+    }
+
+    function resetGame() { init(); }
+    init();
+  </script>
+</body>
+</html>

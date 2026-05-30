@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rune Memory</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #050510;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-family: 'Courier New', monospace;
+    color: #00d4ff;
+    overflow: hidden;
+  }
+  #info { font-size: 16px; margin-bottom: 15px; text-shadow: 0 0 10px rgba(0,212,255,0.5); }
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(4, 80px);
+    gap: 10px;
+  }
+  .card {
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    perspective: 500px;
+  }
+  .card:hover { transform: scale(1.05); }
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s;
+    transform-style: preserve-3d;
+  }
+  .card.flipped .card-inner { transform: rotateY(180deg); }
+  .card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+  }
+  .card-front {
+    background: linear-gradient(135deg, #0d0d2b, #1a1a3e);
+    border: 2px solid rgba(0,212,255,0.3);
+    box-shadow: 0 0 10px rgba(0,212,255,0.1);
+  }
+  .card-front::after { content: '?'; font-size: 28px; color: rgba(0,212,255,0.3); }
+  .card-back {
+    background: linear-gradient(135deg, #1a0a30, #0d0d2b);
+    border: 2px solid rgba(123,47,247,0.5);
+    transform: rotateY(180deg);
+    box-shadow: 0 0 15px rgba(123,47,247,0.3);
+  }
+  .card.matched .card-back {
+    border-color: rgba(0,255,136,0.5);
+    box-shadow: 0 0 15px rgba(0,255,136,0.3);
+  }
+  #overlay {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(5,5,16,0.95);
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid rgba(0,212,255,0.3);
+  }
+  #overlay h2 { font-size: 22px; margin-bottom: 10px; text-shadow: 0 0 15px rgba(0,212,255,0.5); }
+  #overlay p { font-size: 14px; color: #6b7280; margin-bottom: 15px; text-align: center; }
+  #overlay button {
+    padding: 10px 30px;
+    background: rgba(0,212,255,0.2);
+    border: 1px solid rgba(0,212,255,0.5);
+    color: #00d4ff;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  #overlay button:hover { background: rgba(0,212,255,0.3); }
+</style>
+</head>
+<body>
+  <div id="info">🔮 Matches: 0/8 | Moves: 0</div>
+  <div id="grid"></div>
+
+  <div id="overlay">
+    <h2>🔮 Rune Memory</h2>
+    <p>Match pairs of ancient runes to unlock the sealed vault</p>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+
+  <script>
+    const grid = document.getElementById('grid');
+    const infoEl = document.getElementById('info');
+    const overlay = document.getElementById('overlay');
+
+    const runes = ['⚡','🔥','💎','🌙','⭐','🌀','❄️','🌊'];
+    let cards, flipped, matched, moves, canFlip;
+
+    function startGame() {
+      overlay.style.display = 'none';
+      cards = [];
+      flipped = [];
+      matched = 0;
+      moves = 0;
+      canFlip = true;
+      grid.innerHTML = '';
+
+      const pairs = [...runes, ...runes];
+      pairs.sort(() => Math.random() - 0.5);
+
+      pairs.forEach((rune, i) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `<div class="card-inner"><div class="card-front"></div><div class="card-back">${rune}</div></div>`;
+        card.dataset.index = i;
+        card.dataset.rune = rune;
+        card.addEventListener('click', () => flipCard(card));
+        grid.appendChild(card);
+        cards.push(card);
+      });
+
+      updateInfo();
+    }
+
+    function flipCard(card) {
+      if (!canFlip || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+      card.classList.add('flipped');
+      flipped.push(card);
+
+      if (flipped.length === 2) {
+        canFlip = false;
+        moves++;
+        updateInfo();
+
+        if (flipped[0].dataset.rune === flipped[1].dataset.rune) {
+          flipped.forEach(c => c.classList.add('matched'));
+          matched++;
+          flipped = [];
+          canFlip = true;
+          updateInfo();
+
+          if (matched === runes.length) {
+            setTimeout(() => {
+              overlay.style.display = 'flex';
+              overlay.innerHTML = `
+                <h2>🎉 Vault Unlocked!</h2>
+                <p>You matched all runes in ${moves} moves!</p>
+                <button onclick="startGame()">Play Again</button>
+              `;
+            }, 500);
+          }
+        } else {
+          setTimeout(() => {
+            flipped.forEach(c => c.classList.remove('flipped'));
+            flipped = [];
+            canFlip = true;
+          }, 800);
+        }
+      }
+    }
+
+    function updateInfo() {
+      infoEl.textContent = `🔮 Matches: ${matched}/${runes.length} | Moves: ${moves}`;
+    }
+  </script>
+</body>
+</html>

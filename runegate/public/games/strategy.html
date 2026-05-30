@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Realm Conqueror</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #050510; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: 'Courier New', monospace; color: #ffd700; overflow: hidden; }
+  #info { font-size: 14px; margin-bottom: 10px; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+  #grid { display: grid; grid-template-columns: repeat(6, 60px); gap: 3px; }
+  .tile {
+    width: 60px; height: 60px;
+    border-radius: 8px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 10px;
+    border: 2px solid transparent;
+  }
+  .tile.empty { background: rgba(13,13,43,0.8); border-color: rgba(123,47,247,0.1); }
+  .tile.empty:hover { border-color: rgba(123,47,247,0.4); }
+  .tile.player { background: rgba(0,212,255,0.15); border-color: rgba(0,212,255,0.4); }
+  .tile.enemy { background: rgba(255,51,102,0.15); border-color: rgba(255,51,102,0.4); }
+  .tile.neutral { background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.2); }
+  .tile .power { font-size: 16px; font-weight: bold; }
+  .tile .owner { font-size: 9px; opacity: 0.7; }
+  .tile.selected { box-shadow: 0 0 15px rgba(0,212,255,0.5); border-color: #00d4ff; }
+  .tile.attackable { box-shadow: 0 0 10px rgba(255,51,102,0.3); }
+  #controls { margin-top: 15px; font-size: 12px; color: #6b7280; }
+  #end-turn {
+    margin-top: 10px; padding: 8px 25px;
+    background: rgba(255,215,0,0.2); border: 1px solid rgba(255,215,0,0.5);
+    color: #ffd700; font-family: 'Courier New', monospace; font-size: 14px;
+    border-radius: 8px; cursor: pointer;
+  }
+  #end-turn:hover { background: rgba(255,215,0,0.3); }
+  #msg { min-height: 20px; font-size: 12px; color: #00d4ff; margin-top: 8px; }
+</style>
+</head>
+<body>
+  <div id="info">👑 Realm Conqueror — Turn <span id="turn">1</span></div>
+  <div id="grid"></div>
+  <div id="msg">Select your territory, then click adjacent tile to attack.</div>
+  <button id="end-turn" onclick="endTurn()">End Turn</button>
+  <div id="controls">Click your tile → Click adjacent to attack | +1 power per tile per turn</div>
+
+  <script>
+    const SIZE = 6;
+    const gridEl = document.getElementById('grid');
+    let grid, turn, selected, gameOver;
+
+    function init() {
+      grid = Array.from({length:SIZE*SIZE}, (_,i) => ({
+        owner: i === 0 ? 'player' : i === SIZE*SIZE-1 ? 'enemy' : 'neutral',
+        power: i === 0 ? 5 : i === SIZE*SIZE-1 ? 5 : Math.floor(Math.random()*3)+1
+      }));
+      turn = 1; selected = null; gameOver = false;
+      render();
+    }
+
+    function render() {
+      gridEl.innerHTML = '';
+      document.getElementById('turn').textContent = turn;
+      grid.forEach((tile, i) => {
+        const el = document.createElement('div');
+        el.className = `tile ${tile.owner}`;
+        if (i === selected) el.classList.add('selected');
+        if (selected !== null && isAdjacent(selected, i) && grid[selected].owner === 'player' && tile.owner !== 'player')
+          el.classList.add('attackable');
+        el.innerHTML = `<div class="power">${tile.power}</div><div class="owner">${tile.owner === 'player' ? '🏰' : tile.owner === 'enemy' ? '💀' : '🌿'}</div>`;
+        el.addEventListener('click', () => clickTile(i));
+        gridEl.appendChild(el);
+      });
+    }
+
+    function isAdjacent(a, b) {
+      const ar = Math.floor(a/SIZE), ac = a%SIZE, br = Math.floor(b/SIZE), bc = b%SIZE;
+      return Math.abs(ar-br)+Math.abs(ac-bc) === 1;
+    }
+
+    function clickTile(i) {
+      if (gameOver) return;
+      if (selected === null) {
+        if (grid[i].owner === 'player') selected = i;
+      } else {
+        if (i === selected) { selected = null; render(); return; }
+        if (isAdjacent(selected, i)) {
+          attack(selected, i);
+        } else if (grid[i].owner === 'player') {
+          selected = i;
+        }
+      }
+      render();
+      checkWin();
+    }
+
+    function attack(from, to) {
+      const atkPower = grid[from].power;
+      const defPower = grid[to].power;
+      const result = atkPower - defPower + Math.floor(Math.random()*3)-1;
+
+      if (result > 0) {
+        grid[to].owner = grid[from].owner;
+        grid[to].power = result;
+        document.getElementById('msg').textContent = `⚔️ Victory! Captured tile with ${result} power remaining.`;
+      } else {
+        grid[from].power = 1;
+        grid[to].power = Math.max(1, defPower - atkPower + 1);
+        document.getElementById('msg').textContent = `💀 Attack failed. ${grid[from].owner} lost the battle.`;
+      }
+      selected = null;
+    }
+
+    function endTurn() {
+      if (gameOver) return;
+      // Player gets +1 to all territories
+      grid.forEach(t => { if (t.owner === 'player') t.power++; });
+
+      // AI turn
+      aiTurn();
+      grid.forEach(t => { if (t.owner === 'enemy') t.power++; });
+
+      turn++;
+      selected = null;
+      render();
+      checkWin();
+    }
+
+    function aiTurn() {
+      const enemyTiles = grid.map((t,i) => ({...t, idx: i})).filter(t => t.owner === 'enemy');
+      // Find attackable tiles
+      for (let et of enemyTiles.sort((a,b) => b.power - a.power)) {
+        const adj = [];
+        for (let i = 0; i < SIZE*SIZE; i++) {
+          if (isAdjacent(et.idx, i) && grid[i].owner !== 'enemy') adj.push(i);
+        }
+        if (adj.length > 0) {
+          const target = adj.sort((a,b) => grid[a].power - grid[b].power)[0];
+          if (et.power > grid[target].power + 1) {
+            const result = et.power - grid[target].power + Math.floor(Math.random()*3)-1;
+            if (result > 0) {
+              grid[target].owner = 'enemy';
+              grid[target].power = result;
+              et.power = 1;
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    function checkWin() {
+      const playerCount = grid.filter(t => t.owner === 'player').length;
+      const enemyCount = grid.filter(t => t.owner === 'enemy').length;
+      if (enemyCount === 0) {
+        gameOver = true;
+        document.getElementById('msg').textContent = '🏆 You conquered the realm!';
+      } else if (playerCount === 0) {
+        gameOver = true;
+        document.getElementById('msg').textContent = '💀 The enemy conquered your realm.';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

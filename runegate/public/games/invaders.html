@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Void Invaders</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #050510;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-family: 'Courier New', monospace;
+    color: #ff6b35;
+    overflow: hidden;
+  }
+  #score { font-size: 18px; margin-bottom: 10px; text-shadow: 0 0 10px rgba(255,107,53,0.5); }
+  canvas { border: 2px solid rgba(255,107,53,0.3); border-radius: 8px; }
+  #info { font-size: 11px; color: #6b7280; margin-top: 10px; }
+  #overlay {
+    position: absolute;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: rgba(5,5,16,0.9); padding: 30px; border-radius: 12px;
+    border: 1px solid rgba(255,107,53,0.3); z-index: 10;
+  }
+  #overlay h2 { margin-bottom: 10px; text-shadow: 0 0 15px rgba(255,107,53,0.5); }
+  #overlay p { font-size: 14px; color: #6b7280; margin-bottom: 15px; text-align: center; }
+  #overlay button {
+    padding: 10px 30px; background: rgba(255,107,53,0.2);
+    border: 1px solid rgba(255,107,53,0.5); color: #ff6b35;
+    font-family: 'Courier New', monospace; font-size: 16px;
+    border-radius: 8px; cursor: pointer;
+  }
+  #overlay button:hover { background: rgba(255,107,53,0.3); }
+</style>
+</head>
+<body>
+  <div id="score">Score: 0 | Lives: 3</div>
+  <canvas id="gameCanvas" width="480" height="400"></canvas>
+  <div id="info">← → Move | Space Shoot</div>
+  <div id="overlay">
+    <h2>🚀 Void Invaders</h2>
+    <p>Defend the realm from interdimensional invaders</p>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const overlay = document.getElementById('overlay');
+    const scoreEl = document.getElementById('score');
+    const W = canvas.width, H = canvas.height;
+
+    let player, bullets, enemies, enemyBullets, particles;
+    let score, lives, keys, gameOver, wave, shootCooldown;
+
+    function init() {
+      player = {x: W/2, y: H-40, w: 30, h: 20, speed: 5};
+      bullets = [];
+      enemies = [];
+      enemyBullets = [];
+      particles = [];
+      score = 0;
+      lives = 3;
+      gameOver = false;
+      wave = 1;
+      shootCooldown = 0;
+      keys = {};
+      spawnWave();
+    }
+
+    function spawnWave() {
+      enemies = [];
+      const cols = Math.min(8, 5 + wave);
+      const rows = Math.min(4, 2 + Math.floor(wave/2));
+      for (let r=0; r<rows; r++)
+        for (let c=0; c<cols; c++)
+          enemies.push({
+            x: 50 + c*50, y: 40 + r*40,
+            w: 30, h: 20,
+            dx: 1 + wave*0.2,
+            alive: true,
+            type: r % 3
+          });
+    }
+
+    function startGame() {
+      overlay.style.display = 'none';
+      init();
+      requestAnimationFrame(loop);
+    }
+
+    function loop() {
+      if (gameOver) {
+        overlay.style.display = 'flex';
+        overlay.innerHTML = `<h2>💀 Realm Lost</h2><p>Score: ${score} | Wave: ${wave}</p><button onclick="startGame()">Try Again</button>`;
+        return;
+      }
+
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function update() {
+      if (keys['ArrowLeft'] || keys['a']) player.x = Math.max(0, player.x - player.speed);
+      if (keys['ArrowRight'] || keys['d']) player.x = Math.min(W-player.w, player.x + player.speed);
+
+      if (shootCooldown > 0) shootCooldown--;
+      if ((keys[' '] || keys['ArrowUp']) && shootCooldown <= 0) {
+        bullets.push({x: player.x + player.w/2 - 2, y: player.y, w: 4, h: 10});
+        shootCooldown = 12;
+      }
+
+      // Bullets
+      bullets = bullets.filter(b => { b.y -= 7; return b.y > -10; });
+
+      // Enemy movement
+      let shouldDrop = false;
+      enemies.forEach(e => {
+        if (!e.alive) return;
+        e.x += e.dx;
+        if (e.x <= 5 || e.x + e.w >= W-5) shouldDrop = true;
+      });
+
+      if (shouldDrop) {
+        enemies.forEach(e => {
+          if (!e.alive) return;
+          e.dx = -e.dx;
+          e.y += 15;
+        });
+      }
+
+      // Enemy shooting
+      if (Math.random() < 0.02 + wave*0.005) {
+        const alive = enemies.filter(e => e.alive);
+        if (alive.length > 0) {
+          const e = alive[Math.floor(Math.random()*alive.length)];
+          enemyBullets.push({x: e.x + e.w/2 - 2, y: e.y + e.h, w: 4, h: 8});
+        }
+      }
+
+      enemyBullets = enemyBullets.filter(b => { b.y += 4; return b.y < H+10; });
+
+      // Collision: bullets vs enemies
+      bullets.forEach(b => {
+        enemies.forEach(e => {
+          if (!e.alive) return;
+          if (b.x < e.x+e.w && b.x+b.w > e.x && b.y < e.y+e.h && b.y+b.h > e.y) {
+            e.alive = false;
+            b.y = -100;
+            score += 10 * (e.type + 1);
+            // Particles
+            for (let i=0; i<8; i++)
+              particles.push({x:e.x+e.w/2, y:e.y+e.h/2, dx:(Math.random()-0.5)*4, dy:(Math.random()-0.5)*4, life:30,
+                color: ['#ff3366','#ff6b35','#ffd700'][e.type]});
+          }
+        });
+      });
+
+      // Collision: enemy bullets vs player
+      enemyBullets.forEach(b => {
+        if (b.x < player.x+player.w && b.x+b.w > player.x && b.y < player.y+player.h && b.y+b.h > player.y) {
+          lives--;
+          b.y = H+100;
+          for (let i=0; i<12; i++)
+            particles.push({x:player.x+player.w/2, y:player.y+player.h/2, dx:(Math.random()-0.5)*6, dy:(Math.random()-0.5)*6, life:40, color:'#ff3366'});
+        }
+      });
+
+      // Particles
+      particles = particles.filter(p => { p.x += p.dx; p.y += p.dy; p.life--; return p.life > 0; });
+
+      // Wave clear
+      if (enemies.every(e => !e.alive)) {
+        wave++;
+        spawnWave();
+      }
+
+      if (lives <= 0) gameOver = true;
+
+      scoreEl.textContent = `Score: ${score} | Lives: ${'♥'.repeat(Math.max(0,lives))} | Wave: ${wave}`;
+    }
+
+    function draw() {
+      ctx.fillStyle = '#050510';
+      ctx.fillRect(0, 0, W, H);
+
+      // Stars
+      for (let i=0; i<50; i++) {
+        ctx.fillStyle = `rgba(255,255,255,${0.1+Math.random()*0.2})`;
+        ctx.fillRect((i*97)%W, (i*73)%H, 1, 1);
+      }
+
+      // Player
+      ctx.fillStyle = '#00ff88';
+      ctx.shadowColor = '#00ff88';
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.moveTo(player.x + player.w/2, player.y);
+      ctx.lineTo(player.x, player.y + player.h);
+      ctx.lineTo(player.x + player.w, player.y + player.h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Bullets
+      ctx.fillStyle = '#00ff88';
+      ctx.shadowColor = '#00ff88';
+      ctx.shadowBlur = 8;
+      bullets.forEach(b => ctx.fillRect(b.x, b.y, b.w, b.h));
+      ctx.shadowBlur = 0;
+
+      // Enemy bullets
+      ctx.fillStyle = '#ff3366';
+      ctx.shadowColor = '#ff3366';
+      ctx.shadowBlur = 8;
+      enemyBullets.forEach(b => ctx.fillRect(b.x, b.y, b.w, b.h));
+      ctx.shadowBlur = 0;
+
+      // Enemies
+      const enemyColors = ['#ff3366','#ff6b35','#ffd700'];
+      enemies.forEach(e => {
+        if (!e.alive) return;
+        ctx.fillStyle = enemyColors[e.type];
+        ctx.shadowColor = enemyColors[e.type];
+        ctx.shadowBlur = 8;
+        ctx.fillRect(e.x+4, e.y+2, 8, 6);
+        ctx.fillRect(e.x, e.y+8, e.w, 10);
+        ctx.fillRect(e.x+2, e.y+4, e.w-4, 14);
+        ctx.shadowBlur = 0;
+      });
+
+      // Particles
+      particles.forEach(p => {
+        ctx.globalAlpha = p.life / 40;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x-1, p.y-1, 3, 3);
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    document.addEventListener('keydown', e => { keys[e.key] = true; if([' ','ArrowLeft','ArrowRight','ArrowUp'].includes(e.key)) e.preventDefault(); });
+    document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+    init();
+  </script>
+</body>
+</html>
