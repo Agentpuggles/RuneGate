@@ -26,51 +26,26 @@ interface Stats {
 }
 
 const avatars = [
-  { id: "wizard", emoji: "" },
-  { id: "warrior", emoji: "" },
-  { id: "rogue", emoji: "" },
-  { id: "archer", emoji: "" },
-  { id: "healer", emoji: "" },
-  { id: "dragon", emoji: "" },
-  { id: "ghost", emoji: "" },
-  { id: "knight", emoji: "" },
-  { id: "bard", emoji: "" },
-  { id: "necro", emoji: "" },
-  { id: "demon", emoji: "" },
-  { id: "angel", emoji: "" },
-  { id: "vampire", emoji: "" },
-  { id: "elf", emoji: "" },
-  { id: "dwarf", emoji: "" },
-  { id: "cyber", emoji: "" },
+  { id: "wizard", emoji: "🧙" }, { id: "warrior", emoji: "⚔" }, { id: "rogue", emoji: "🗡" }, { id: "archer", emoji: "🏹" },
+  { id: "healer", emoji: "✨" }, { id: "dragon", emoji: "🐉" }, { id: "ghost", emoji: "👻" }, { id: "knight", emoji: "🛡" },
+  { id: "bard", emoji: "🎵" }, { id: "necro", emoji: "💀" }, { id: "demon", emoji: "😈" }, { id: "angel", emoji: "😇" },
+  { id: "vampire", emoji: "🧛" }, { id: "elf", emoji: "🧝" }, { id: "dwarf", emoji: "⛏" }, { id: "cyber", emoji: "🤖" },
 ];
 
 const titles = [
-  "Archmage of the Digital Gate",
-  "Wanderer of the Void",
-  "Champion of the Arcade",
-  "Seeker of the Arcane",
-  "Tavern Bard",
-  "Portal Master",
-  "Code Wizard",
-  "Rune Forger",
-  "Digital Paladin",
-  "Shadow Coder",
-  "Neon Druid",
-  "Keeper of the Grimoire",
-  "Slayer of Bugs",
-  "Lord of the Realm",
-  "Knight of the Portal",
-  "Alchemist of Code",
+  "Archmage of the Digital Gate", "Wanderer of the Void", "Champion of the Arcade", "Seeker of the Arcane",
+  "Tavern Bard", "Portal Master", "Code Wizard", "Rune Forger", "Digital Paladin", "Shadow Coder",
+  "Neon Druid", "Keeper of the Grimoire", "Slayer of Bugs", "Lord of the Realm", "Knight of the Portal", "Alchemist of Code",
 ];
 
 const ranks = [
-  { name: "Initiate", min: 1, color: "#64748b" },
-  { name: "Apprentice", min: 5, color: "#10b981" },
-  { name: "Adept", min: 10, color: "#3b82f6" },
-  { name: "Veteran", min: 20, color: "#a855f7" },
-  { name: "Champion", min: 30, color: "#fbbf24" },
-  { name: "Legend", min: 50, color: "#f59e0b" },
-  { name: "Mythic", min: 100, color: "#ef4444" },
+  { name: "Initiate", min: 1, color: "#666655" },
+  { name: "Apprentice", min: 5, color: "#00cc66" },
+  { name: "Adept", min: 10, color: "#3366cc" },
+  { name: "Veteran", min: 20, color: "#9933cc" },
+  { name: "Champion", min: 30, color: "#d4af37" },
+  { name: "Legend", min: 50, color: "#ff9900" },
+  { name: "Mythic", min: 100, color: "#cc0000" },
 ];
 
 export default function ProfileClient({ user, stats }: { user: User; stats: Stats }) {
@@ -130,70 +105,64 @@ export default function ProfileClient({ user, stats }: { user: User; stats: Stat
   };
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-rune text-portal-gold">Character Sheet</h1>
-          <p className="text-sm text-portal-text-muted">Your legend awaits</p>
+      <div className="frame">
+        <div className="frame-header">
+          <span>👤</span> <h3>Character Sheet</h3>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Profile Card */}
         <div className="lg:col-span-1">
-          <div className="panel panel-gold">
-            <div className="panel-header">
-              <span className="icon"></span>
-              <h3>{dName || user.username}</h3>
+          <div className="frame frame-gold">
+            <div className="frame-header">
+              <span>⚔</span> <h3>{dName || user.username}</h3>
             </div>
-            <div className="panel-body text-center">
-              <div className="avatar avatar-lg mx-auto animate-glow mb-4">
-                {pImg ? (
-                  <img src={pImg} alt="" />
-                ) : (
-                  <span className="text-3xl">
-                    {avatars.find((a) => a.id === selAvatar)?.emoji || ""}
-                  </span>
-                )}
+            <div className="frame-inner text-center">
+              {/* Avatar */}
+              <div className="avatar-frame avatar-frame-gold w-20 h-20 mx-auto mb-3">
+                <div className="avatar-inner w-full h-full flex items-center justify-center text-4xl">
+                  {pImg ? (
+                    <img src={pImg} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{avatars.find((a) => a.id === selAvatar)?.emoji || "👤"}</span>
+                  )}
+                </div>
               </div>
 
-              <h2 className="text-xl font-bold text-portal-text-primary">{dName || user.username}</h2>
-              <p className="text-xs text-portal-text-dim font-mono">@{user.username}</p>
-              <p className="text-sm text-portal-text-muted mt-2">{selTitle}</p>
+              <h2 className="text-lg font-rune text-guild-gold">{dName || user.username}</h2>
+              <p className="font-mono text-2xs text-guild-text-dim">@{user.username}</p>
+              <p className="text-xs text-guild-text-dim mt-1">{selTitle}</p>
 
-              <div
-                className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold mt-4"
-                style={{
-                  background: `${curRank.color}15`,
-                  color: curRank.color,
-                  border: `1px solid ${curRank.color}30`,
-                }}
-              >
+              <div className="badge badge-gold mt-3" style={{ borderColor: curRank.color }}>
                 {curRank.name}
               </div>
 
               {bio && (
-                <p className="text-sm text-portal-text-secondary mt-4 italic leading-relaxed">
-                  "{bio}"
-                </p>
+                <p className="text-xs text-guild-text italic mt-3 px-2">&quot;{bio}&quot;</p>
               )}
 
-              <div className="mt-6">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-portal-text-muted">Level {user.level}</span>
-                  <span className="text-portal-gold font-mono">{user.xp.toLocaleString()} XP</span>
-                </div>
-                <div className="progress-bar progress-gold">
-                  <div className="progress-fill" style={{ width: `${xpProg}%` }} />
-                </div>
+              <div className="divider-double my-3" />
+
+              {/* Stats */}
+              <div className="stat-row">
+                <span className="stat-label">LEVEL {user.level}</span>
+                <span className="stat-value text-guild-gold">{user.xp.toLocaleString()} XP</span>
+              </div>
+              <div className="bar bar-xp">
+                <div className="bar-fill" style={{ width: `${xpProg}%` }} />
+                <span className="bar-text">{xpProg.toFixed(0)}%</span>
               </div>
 
-              <div className="mt-4 px-4 py-3 rounded-lg bg-portal-bg-base border border-portal-border">
-                <span className="text-portal-gold font-bold text-lg font-mono">{user.gold.toLocaleString()} Gold</span>
+              <div className="mt-3">
+                <span className="counter text-base">💰 {user.gold.toLocaleString()} Gold</span>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-portal-border text-xs text-portal-text-dim space-y-2">
+              <div className="divider-gold my-3" />
+
+              <div className="text-2xs text-guild-text-dim space-y-1">
                 <p>Joined: {new Date(user.createdAt).toLocaleDateString()}</p>
                 <p>Last login: {new Date(user.lastLogin).toLocaleDateString()}</p>
               </div>
@@ -202,79 +171,80 @@ export default function ProfileClient({ user, stats }: { user: User; stats: Stat
         </div>
 
         {/* Tabs Section */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4">
           {/* Tab Navigation */}
-          <div className="flex gap-2 border-b border-portal-border pb-2">
-            {(["stats", "customize", "settings"] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`btn ${tab === t ? "btn-primary" : "btn-ghost"}`}
-              >
-                {t === "stats" ? " Stats" : t === "customize" ? " Customize" : " Settings"}
-              </button>
-            ))}
+          <div className="nav-bar px-0">
+            <button onClick={() => setTab("stats")} className={`nav-item ${tab === "stats" ? "active" : ""}`}>
+              [📊] Stats
+            </button>
+            <span className="nav-divider">|</span>
+            <button onClick={() => setTab("customize")} className={`nav-item ${tab === "customize" ? "active" : ""}`}>
+              [🎨] Customize
+            </button>
+            <span className="nav-divider">|</span>
+            <button onClick={() => setTab("settings")} className={`nav-item ${tab === "settings" ? "active" : ""}`}>
+              [⚙] Settings
+            </button>
           </div>
 
           {/* Stats Tab */}
           {tab === "stats" && (
             <>
-              <div className="panel">
-                <div className="panel-header">
-                  <span className="icon"></span>
-                  <h3>Adventure Statistics</h3>
+              <div className="frame">
+                <div className="frame-header">
+                  <span>📊</span> <h3>Adventure Statistics</h3>
                 </div>
-                <div className="panel-body">
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                <div className="frame-inner">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                     {[
-                      { label: "Games", value: stats.gamesPlayed, icon: "" },
-                      { label: "Messages", value: stats.messagesSent, icon: "" },
-                      { label: "Searches", value: stats.searchesMade, icon: "" },
-                      { label: "Favorites", value: stats.favoriteCount, icon: "" },
-                      { label: "Notes", value: stats.noteCount, icon: "" },
+                      { label: "Games", value: stats.gamesPlayed, icon: "🎮", color: "emerald" },
+                      { label: "Messages", value: stats.messagesSent, icon: "💬", color: "gold" },
+                      { label: "Searches", value: stats.searchesMade, icon: "🔍", color: "sapphire" },
+                      { label: "Favorites", value: stats.favoriteCount, icon: "⭐", color: "amethyst" },
+                      { label: "Notes", value: stats.noteCount, icon: "📜", color: "topaz" },
                     ].map((s) => (
-                      <div key={s.label} className="stat-box">
-                        <div className="label">{s.icon} {s.label}</div>
-                        <div className="value">{s.value}</div>
+                      <div key={s.label} className="frame p-2 text-center">
+                        <div className="text-base">{s.icon}</div>
+                        <div className="text-sm font-bold font-mono text-guild-text-light">{s.value}</div>
+                        <div className="text-2xs text-guild-text-dim uppercase">{s.label}</div>
                       </div>
                     ))}
                   </div>
-                  <div className="mt-4 p-3 rounded-lg text-center bg-portal-bg-elevated border border-portal-border">
-                    <span className="text-portal-text-muted">Total Interactions: </span>
-                    <span className="font-bold text-portal-sapphire font-mono">{total}</span>
+                  <div className="divider-double" />
+                  <div className="text-center">
+                    <span className="text-guild-text-dim">Total Interactions:</span>{" "}
+                    <span className="font-bold text-guild-gold font-mono">{total}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="panel">
-                <div className="panel-header">
-                  <span className="icon"></span>
-                  <h3>Rank Progression</h3>
+              <div className="frame">
+                <div className="frame-header">
+                  <span>🏆</span> <h3>Rank Progression</h3>
                 </div>
-                <div className="panel-body space-y-2">
-                  {ranks.map((r) => {
-                    const isActive = user.level >= r.min;
-                    return (
-                      <div
-                        key={r.name}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                          isActive ? "bg-portal-bg-elevated" : "opacity-40"
-                        }`}
-                      >
-                        <div
-                          className="w-4 h-4 rounded-full flex-shrink-0"
-                          style={{
-                            background: isActive ? r.color : "transparent",
-                            border: `2px solid ${r.color}`,
-                          }}
-                        />
-                        <div className="flex-1 flex justify-between text-sm">
-                          <span style={{ color: isActive ? r.color : "#64748b" }}>{r.name}</span>
-                          <span className="text-portal-text-dim">Level {r.min}+</span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="frame-inner p-0">
+                  <table className="guild-table">
+                    <tbody>
+                      {ranks.map((r) => {
+                        const isActive = user.level >= r.min;
+                        return (
+                          <tr key={r.name} className={!isActive ? "opacity-40" : ""}>
+                            <td className="w-12 text-center">
+                              <div
+                                className="w-4 h-4 rounded-full mx-auto"
+                                style={{
+                                  background: isActive ? r.color : "transparent",
+                                  border: `2px solid ${r.color}`,
+                                }}
+                              />
+                            </td>
+                            <td style={{ color: isActive ? r.color : undefined }}>{r.name}</td>
+                            <td className="text-right text-guild-text-dim">Level {r.min}+</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </>
@@ -282,118 +252,71 @@ export default function ProfileClient({ user, stats }: { user: User; stats: Stat
 
           {/* Customize Tab */}
           {tab === "customize" && (
-            <div className="space-y-4">
-              <div className="panel">
-                <div className="panel-header">
-                  <span className="icon"></span>
-                  <h3>Display Name</h3>
+            <div className="space-y-3">
+              <div className="frame">
+                <div className="frame-header">
+                  <span>✏</span> <h3>Display Name</h3>
                 </div>
-                <div className="panel-body">
-                  <p className="text-sm text-portal-text-muted mb-3">
-                    Shown instead of your login username.
-                  </p>
-                  <input
-                    type="text"
-                    value={dName}
-                    onChange={(e) => setDName(e.target.value)}
-                    placeholder="Enter display name..."
-                    className="input"
-                    maxLength={50}
-                  />
-                  <p className="text-xs text-portal-text-dim mt-2">Login: @{user.username}</p>
+                <div className="frame-inner">
+                  <p className="text-xs text-guild-text-dim mb-2">Shown instead of your login username.</p>
+                  <input type="text" value={dName} onChange={(e) => setDName(e.target.value)} placeholder="Enter display name..." className="inp" maxLength={50} />
+                  <p className="text-2xs text-guild-text-dim mt-1">Login: @{user.username}</p>
                 </div>
               </div>
 
-              <div className="panel">
-                <div className="panel-header">
-                  <span className="icon"></span>
-                  <h3>Biography</h3>
+              <div className="frame">
+                <div className="frame-header">
+                  <span>📜</span> <h3>Biography</h3>
                 </div>
-                <div className="panel-body">
-                  <textarea
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    placeholder="Tell the realm about yourself..."
-                    className="input min-h-[100px] resize-y"
-                    maxLength={300}
-                  />
-                  <p className="text-xs text-portal-text-dim mt-2">{bio.length}/300 characters</p>
+                <div className="frame-inner">
+                  <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell the realm about yourself..." className="inp" style={{ minHeight: "80px" }} maxLength={300} />
+                  <p className="text-2xs text-guild-text-dim mt-1">{bio.length}/300</p>
                 </div>
               </div>
 
-              <div className="panel">
-                <div className="panel-header">
-                  <span className="icon"></span>
-                  <h3>Profile Image</h3>
+              <div className="frame">
+                <div className="frame-header">
+                  <span>🖼</span> <h3>Profile Image</h3>
                 </div>
-                <div className="panel-body">
-                  <p className="text-sm text-portal-text-muted mb-4">
-                    Upload an image to use as your portrait. This overrides the emoji avatar.
-                  </p>
-                  <div className="flex items-center gap-6">
-                    <div
-                      className="w-24 h-24 rounded-full overflow-hidden flex-shrink-0 border-2 border-portal-gold"
-                      style={{
-                        background: pImg
-                          ? "transparent"
-                          : "linear-gradient(135deg, #f59e0b, #b45309)",
-                      }}
-                    >
-                      {pImg ? (
-                        <img src={pImg} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-4xl">
-                          {avatars.find((a) => a.id === selAvatar)?.emoji || ""}
-                        </div>
-                      )}
+                <div className="frame-inner">
+                  <p className="text-xs text-guild-text-dim mb-3">Upload an image to use as your portrait.</p>
+                  <div className="flex items-center gap-4">
+                    <div className="avatar-frame avatar-frame-gold w-16 h-16">
+                      <div className="avatar-inner w-full h-full flex items-center justify-center text-2xl">
+                        {pImg ? (
+                          <img src={pImg} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <span>{avatars.find((a) => a.id === selAvatar)?.emoji || "👤"}</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <input
-                        type="file"
-                        ref={fileRef}
-                        onChange={handleUpload}
-                        accept="image/jpeg,image/png,image/gif,image/webp"
-                        className="hidden"
-                      />
-                      <button
-                        onClick={() => fileRef.current?.click()}
-                        disabled={uploading}
-                        className="btn btn-secondary disabled:opacity-50"
-                      >
-                        {uploading ? "Uploading..." : pImg ? " Change Photo" : " Upload Photo"}
+                    <div>
+                      <input type="file" ref={fileRef} onChange={handleUpload} accept="image/*" className="hidden" />
+                      <button onClick={() => fileRef.current?.click()} disabled={uploading} className="btn btn-std text-xs mb-2">
+                        {uploading ? "Uploading..." : pImg ? "[📷 Change]" : "[📷 Upload]"}
                       </button>
                       {pImg && (
-                        <button onClick={() => setPImg("")} className="btn btn-danger ml-3">
-                          Remove
+                        <button onClick={() => setPImg("")} className="btn btn-blood text-xs ml-2">
+                          [X] Remove
                         </button>
                       )}
-                      <p className="text-xs text-portal-text-dim mt-3">
-                        JPG, PNG, GIF, or WebP. Max 2MB.
-                      </p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="panel">
-                <div className="panel-header">
-                  <span className="icon"></span>
-                  <h3>Avatar Emoji</h3>
+              <div className="frame">
+                <div className="frame-header">
+                  <span>🎭</span> <h3>Avatar Emoji</h3>
                 </div>
-                <div className="panel-body">
-                  <p className="text-sm text-portal-text-muted mb-4">
-                    Used when no profile image is set.
-                  </p>
-                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
+                <div className="frame-inner">
+                  <p className="text-xs text-guild-text-dim mb-2">Used when no profile image is set.</p>
+                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
                     {avatars.map((av) => (
                       <button
                         key={av.id}
                         onClick={() => setSelAvatar(av.id)}
-                        className={`p-3 rounded-lg text-3xl transition-all ${
-                          selAvatar === av.id
-                            ? "bg-portal-gold/15 border-2 border-portal-gold scale-110"
-                            : "bg-portal-bg-base border border-portal-border hover:scale-105"
-                        }`}
+                        className={`frame p-2 text-2xl text-center ${selAvatar === av.id ? "border-guild-gold" : ""}`}
                       >
                         {av.emoji}
                       </button>
@@ -402,75 +325,73 @@ export default function ProfileClient({ user, stats }: { user: User; stats: Stat
                 </div>
               </div>
 
-              <div className="panel">
-                <div className="panel-header">
-                  <span className="icon"></span>
-                  <h3>Title</h3>
+              <div className="frame">
+                <div className="frame-header">
+                  <span>🏅</span> <h3>Title</h3>
                 </div>
-                <div className="panel-body">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {titles.map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => setSelTitle(t)}
-                        className={`text-left px-4 py-3 rounded-lg text-sm transition-all ${
-                          selTitle === t
-                            ? "text-portal-gold bg-portal-gold/10 border border-portal-gold"
-                            : "text-portal-text-muted bg-portal-bg-base border border-portal-border hover:text-portal-text-primary"
-                        }`}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
+                <div className="frame-inner p-0">
+                  <table className="guild-table">
+                    <tbody>
+                      {titles.map((t) => (
+                        <tr
+                          key={t}
+                          onClick={() => setSelTitle(t)}
+                          className={`cursor-pointer ${selTitle === t ? "bg-guild-gold bg-opacity-10" : ""}`}
+                        >
+                          <td className="w-8 text-center">
+                            {selTitle === t ? <span className="text-guild-gold">★</span> : ""}
+                          </td>
+                          <td className={selTitle === t ? "text-guild-gold" : ""}>{t}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 pt-4">
-                <button onClick={handleSave} disabled={saving} className="btn btn-primary disabled:opacity-50">
-                  {saving ? "Saving..." : saved ? " Saved!" : " Save Changes"}
+              <div className="flex items-center gap-3">
+                <button onClick={handleSave} disabled={saving} className="btn btn-gold disabled:opacity-50">
+                  {saving ? "Saving..." : saved ? "[✓] Saved!" : "[💾] Save Changes"}
                 </button>
-                {saved && (
-                  <span className="text-sm text-portal-emerald font-medium">Changes applied!</span>
-                )}
+                {saved && <span className="text-xs text-guild-emerald">Changes applied!</span>}
               </div>
             </div>
           )}
 
           {/* Settings Tab */}
           {tab === "settings" && (
-            <div className="space-y-4">
-              <div className="panel">
-                <div className="panel-header">
-                  <span className="icon"></span>
-                  <h3>Account</h3>
+            <div className="space-y-3">
+              <div className="frame">
+                <div className="frame-header">
+                  <span>🔑</span> <h3>Account</h3>
                 </div>
-                <div className="panel-body space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-portal-text-muted">Username</span>
-                    <span className="text-portal-text-primary font-mono">@{user.username}</span>
-                  </div>
-                  <div className="divider" />
-                  <div className="flex justify-between items-center">
-                    <span className="text-portal-text-muted">Display Name</span>
-                    <span className="text-portal-text-primary">{dName || "Not set"}</span>
-                  </div>
-                  <div className="divider" />
-                  <div className="flex justify-between items-center">
-                    <span className="text-portal-text-muted">User ID</span>
-                    <span className="text-portal-text-dim font-mono text-xs">{user.id.substring(0, 12)}...</span>
-                  </div>
+                <div className="frame-inner">
+                  <table className="guild-table">
+                    <tbody>
+                      <tr>
+                        <td className="w-32">Username</td>
+                        <td className="font-mono text-guild-text-light">@{user.username}</td>
+                      </tr>
+                      <tr>
+                        <td>Display Name</td>
+                        <td className="text-guild-text-light">{dName || "Not set"}</td>
+                      </tr>
+                      <tr>
+                        <td>User ID</td>
+                        <td className="font-mono text-xs text-guild-text-dim">{user.id.substring(0, 12)}...</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
-              <div className="panel">
-                <div className="panel-header">
-                  <span className="icon"></span>
-                  <h3>Portal</h3>
+              <div className="frame">
+                <div className="frame-header">
+                  <span>🚪</span> <h3>Portal</h3>
                 </div>
-                <div className="panel-body">
-                  <Link href="/login" className="btn btn-danger">
-                    Logout & Return to Gate
+                <div className="frame-inner">
+                  <Link href="/login" className="btn btn-blood">
+                    [X] Logout & Return to Gate
                   </Link>
                 </div>
               </div>

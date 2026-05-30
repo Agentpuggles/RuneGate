@@ -25,23 +25,7 @@ interface ChatMessage {
 }
 
 const avatarEmojis: Record<string, string> = {
-  wizard: "",
-  warrior: "",
-  rogue: "",
-  archer: "",
-  healer: "",
-  dragon: "",
-  ghost: "",
-  knight: "",
-  bard: "",
-  necro: "",
-  demon: "",
-  angel: "",
-  vampire: "",
-  elf: "",
-  dwarf: "",
-  cyber: "",
-  default: "",
+  wizard: "🧙", warrior: "⚔", rogue: "🗡", archer: "🏹"
 };
 
 function getDisplayName(u: ChatUser): string {
@@ -50,14 +34,12 @@ function getDisplayName(u: ChatUser): string {
 
 function renderAvatar(u: ChatUser) {
   if (u.profileImage) {
-    return (
-      <img src={u.profileImage} alt="" className="w-full h-full rounded-full object-cover" />
-    );
+    return <img src={u.profileImage} alt="" className="w-full h-full object-cover" />;
   }
-  return <span>{avatarEmojis[u.avatar] || avatarEmojis.default}</span>;
+  return <span>{avatarEmojis[u.avatar] || "👤"}</span>;
 }
 
-export default function ChatClient({ username }: { username: string; userId: string }) {
+export default function ChatClient({ username, userId }: { username: string; userId: string }) {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [activeChannel, setActiveChannel] = useState("lobby");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -74,7 +56,7 @@ export default function ChatClient({ username }: { username: string; userId: str
       const data = await res.json();
       if (data.channels) setChannels(data.channels);
     } catch {
-      // ignore
+      // Handle error silently
     }
   }, []);
 
@@ -101,7 +83,7 @@ export default function ChatClient({ username }: { username: string; userId: str
         }
       }
     } catch {
-      // ignore
+      // Handle error silently
     }
   }, [activeChannel]);
 
@@ -141,7 +123,7 @@ export default function ChatClient({ username }: { username: string; userId: str
         await fetchMessages();
       }
     } catch {
-      // ignore
+      // Handle error silently
     } finally {
       setSending(false);
     }
@@ -156,59 +138,55 @@ export default function ChatClient({ username }: { username: string; userId: str
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-rune text-portal-gold">Chat Tavern</h1>
-          <p className="text-sm text-portal-text-muted">The Gathering Hall</p>
+      <div className="frame">
+        <div className="frame-header">
+          <span>💬</span> <h3>Chat Tavern — The Gathering Hall</h3>
         </div>
       </div>
 
       <div className="flex gap-4" style={{ height: "calc(100vh - 220px)" }}>
-        {/* Channels sidebar */}
-        <div className="w-48 flex-shrink-0 hidden md:block">
-          <div className="panel h-full">
-            <div className="panel-header">
-              <span className="icon"></span>
-              <h3>Channels</h3>
+        {/* Channels */}
+        <div className="w-40 flex-shrink-0 hidden md:block">
+          <div className="frame h-full">
+            <div className="frame-header">
+              <span>📢</span> <h3>Channels</h3>
             </div>
-            <div className="panel-body p-2 space-y-1">
+            <div className="frame-inner p-1">
               {channels.map((ch) => (
                 <button
                   key={ch.id}
                   onClick={() => setActiveChannel(ch.name)}
-                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all flex items-center gap-2 ${
+                  className={`w-full text-left px-3 py-2 text-xs transition-colors border mb-1 ${
                     activeChannel === ch.name
-                      ? "bg-portal-gold/10 text-portal-gold border-l-2 border-portal-gold"
-                      : "text-portal-text-muted hover:bg-portal-bg-elevated hover:text-portal-text-primary"
+                      ? "border-guild-gold bg-guild-gold bg-opacity-10 text-guild-gold"
+                      : "border-transparent text-guild-text-dim hover:text-guild-text-light hover:bg-guild-bg-alt"
                   }`}
                 >
-                  <span>{ch.icon}</span>
-                  <span>#{ch.name}</span>
+                  {ch.icon} #{ch.name}
                 </button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Chat area */}
+        {/* Chat Area */}
         <div className="flex-1 flex flex-col">
-          <div className="panel flex-1 flex flex-col overflow-hidden">
-            <div className="panel-header">
-              <span>{channels.find((c) => c.name === activeChannel)?.icon || ""}</span>
+          <div className="frame flex-1 flex flex-col">
+            <div className="frame-header">
+              <span>{channels.find((c) => c.name === activeChannel)?.icon || "💬"}</span>
               <h3>#{activeChannel}</h3>
-              <span className="text-xs text-portal-text-dim ml-2">
-                {channels.find((c) => c.name === activeChannel)?.description}
+              <span className="ml-auto text-guild-text-dim text-xs">
+                [{messages.length} messages]
               </span>
-              <span className="text-xs text-portal-text-dim ml-auto">{messages.length} messages</span>
             </div>
 
             {/* Mobile channel select */}
             <select
               value={activeChannel}
               onChange={(e) => setActiveChannel(e.target.value)}
-              className="md:hidden mx-4 mt-3 px-3 py-2 rounded-lg text-sm bg-portal-bg-base border border-portal-border text-portal-text-primary"
+              className="md:hidden mx-2 mt-2 bg-guild-bg border border-guild-border text-guild-text p-2 text-xs"
             >
               {channels.map((ch) => (
                 <option key={ch.id} value={ch.name}>
@@ -218,38 +196,37 @@ export default function ChatClient({ username }: { username: string; userId: str
             </select>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            <div className="frame-inner flex-1 overflow-y-auto p-2">
               {messages.length === 0 && (
-                <div className="text-center py-16">
-                  <div className="text-5xl mb-4 opacity-30"></div>
-                  <p className="text-portal-text-muted">The tavern is quiet...</p>
+                <div className="text-center py-8 text-guild-text-dim">
+                  <div className="text-3xl mb-2">🍺</div>
+                  <p className="text-xs">The tavern is quiet...</p>
                 </div>
               )}
 
               {messages.map((msg) => (
-                <div key={msg.id} className="chat-message">
+                <div key={msg.id} className="border-b border-guild-border border-opacity-50 py-2 mb-1">
                   {msg.type === "system" ? (
-                    <span className="italic text-portal-text-dim text-xs text-center block py-2">
+                    <p className="text-guild-text-dim text-xs italic text-center">
                       *** {msg.content} ***
-                    </span>
+                    </p>
                   ) : (
-                    <div className="flex items-start gap-3">
-                      <div className="avatar avatar-sm">
-                        {renderAvatar(msg.user)}
+                    <div className="flex gap-2">
+                      <div className="avatar-frame w-6 h-6 flex-shrink-0">
+                        <div className="avatar-inner w-full h-full flex items-center justify-center text-xs">
+                          {renderAvatar(msg.user)}
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline gap-2 mb-1">
-                          <span className="text-sm font-semibold text-portal-sapphire">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-xs text-guild-gold">
                             {getDisplayName(msg.user)}
                           </span>
-                          <span className="text-2xs text-portal-text-dim">
-                            {new Date(msg.createdAt).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                          <span className="text-2xs text-guild-text-dim font-mono">
+                            [{new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}]
                           </span>
                         </div>
-                        <p className="text-sm text-portal-text-secondary break-words">{msg.content}</p>
+                        <p className="text-xs text-guild-text mt-1 break-words">{msg.content}</p>
                       </div>
                     </div>
                   )}
@@ -259,8 +236,8 @@ export default function ChatClient({ username }: { username: string; userId: str
             </div>
 
             {/* Input */}
-            <div className="p-4 border-t border-portal-border">
-              <form onSubmit={sendMessage} className="flex gap-3">
+            <div className="border-t border-guild-border p-2">
+              <form onSubmit={sendMessage} className="flex gap-2">
                 <input
                   type="text"
                   value={input}
@@ -277,13 +254,13 @@ export default function ChatClient({ username }: { username: string; userId: str
                     }
                   }}
                   placeholder={`Message #${activeChannel}...`}
-                  className="input flex-1"
+                  className="inp flex-1"
                   disabled={sending}
                 />
                 <button
                   type="submit"
                   disabled={sending || !input.trim()}
-                  className="btn btn-primary px-4 disabled:opacity-50"
+                  className="btn btn-gold disabled:opacity-50"
                 >
                   Send
                 </button>

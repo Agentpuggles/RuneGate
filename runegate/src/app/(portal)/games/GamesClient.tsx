@@ -19,21 +19,12 @@ interface Game {
 }
 
 const categories = [
-  { id: "all", label: "All Games", icon: "sparkles" },
-  { id: "puzzle", label: "Puzzle", icon: "puzzle" },
-  { id: "strategy", label: "Strategy", icon: "chess" },
-  { id: "rpg", label: "RPG", icon: "sword" },
-  { id: "arcade", label: "Arcade", icon: "joystick" },
+  { id: "all", label: "All", icon: "[*]" },
+  { id: "puzzle", label: "Puzzle", icon: "[P]" },
+  { id: "strategy", label: "Strategy", icon: "[S]" },
+  { id: "rpg", label: "RPG", icon: "[R]" },
+  { id: "arcade", label: "Arcade", icon: "[A]" },
 ];
-
-const iconMap: Record<string, string> = {
-  all: "",
-  sparkles: "",
-  puzzle: "",
-  chess: "",
-  sword: "",
-  joystick: "",
-};
 
 export default function GamesClient() {
   const [games, setGames] = useState<Game[]>([]);
@@ -109,41 +100,35 @@ export default function GamesClient() {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-rune text-portal-gold">Games Realm</h1>
-          <p className="text-sm text-portal-text-muted">Arcane Arcade - {games.length} games available</p>
+      <div className="frame">
+        <div className="frame-header">
+          <span>🎮</span> <h3>Games Realm — Arcade</h3>
+          <span className="ml-auto text-guild-text-dim text-xs">[{games.length} games available]</span>
         </div>
       </div>
 
       {/* Recently Played */}
       {recent.length > 0 && (
-        <div className="panel">
-          <div className="panel-header">
-            <span className="icon"></span>
-            <h3>Recently Played</h3>
+        <div className="frame">
+          <div className="frame-header">
+            <span>⏱</span> <h3>Recently Played</h3>
           </div>
-          <div className="panel-body">
-            <div className="flex gap-4 overflow-x-auto pb-2">
+          <div className="frame-inner">
+            <div className="flex gap-3 overflow-x-auto pb-2">
               {recent.slice(0, 8).map((game) => (
                 <Link
                   key={game.id}
                   href={`/games/${game.id}`}
-                  className="flex-shrink-0 w-36 group"
+                  className="flex-shrink-0 frame hover:border-guild-gold transition-colors"
+                  style={{ minWidth: "120px" }}
                 >
-                  <div className="relative rounded-lg overflow-hidden mb-2">
-                    <img
-                      src={game.image || ""}
-                      alt=""
-                      className="w-full h-20 object-cover transition-transform group-hover:scale-110"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-portal-bg-base/0 group-hover:bg-portal-bg-base/30 transition-colors" />
-                  </div>
-                  <div className="text-sm font-medium text-portal-text-primary group-hover:text-portal-gold transition-colors truncate">
-                    {game.title}
+                  <div className="p-2 text-center">
+                    <div className="text-2xl mb-1">{game.thumbnail}</div>
+                    <div className="text-xs font-bold text-guild-text-light truncate">
+                      {game.title}
+                    </div>
                   </div>
                 </Link>
               ))}
@@ -152,26 +137,25 @@ export default function GamesClient() {
         </div>
       )}
 
-      {/* Filters */}
-      <div className="panel">
-        <div className="panel-header">
-          <span className="icon"></span>
-          <h3>Browse Games</h3>
+      {/* Filter Panel */}
+      <div className="frame">
+        <div className="frame-header">
+          <span>🔍</span> <h3>Browse Games</h3>
         </div>
-        <div className="panel-body space-y-4">
-          <div className="flex gap-3">
+        <div className="frame-inner">
+          <div className="flex gap-2 mb-3">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for a game..."
-              className="input flex-1"
+              placeholder="Search games..."
+              className="inp flex-1"
             />
             <button
               onClick={() => setFavoritesOnly(!favoritesOnly)}
-              className={`btn ${favoritesOnly ? "btn-primary" : "btn-secondary"} flex-shrink-0`}
+              className="btn btn-std flex-shrink-0"
             >
-              {favoritesOnly ? "" : ""} Favorites
+              {favoritesOnly ? "[★ Favs]" : "[☆ Favs]"}
             </button>
           </div>
 
@@ -180,93 +164,72 @@ export default function GamesClient() {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`btn ${activeCategory === cat.id ? "btn-primary" : "btn-ghost"}`}
+                className={`btn ${activeCategory === cat.id ? "btn-gold" : "btn-std"} text-xs`}
               >
-                {iconMap[cat.icon]} {cat.label}
+                {cat.icon} {cat.label}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Games Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filteredGames.map((game) => (
-          <div key={game.id} className="gcard group">
-            <div className="relative">
-              <img
-                src={game.image || ""}
-                alt={game.title}
-                className="gimg"
-                loading="lazy"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "";
-                  (e.target as HTMLImageElement).style.background =
-                    "linear-gradient(135deg, #141a2e, #0a0e1a)";
-                }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-5xl drop-shadow-lg opacity-40 group-hover:opacity-60 transition-opacity">
-                  {game.thumbnail}
-                </span>
-              </div>
-              <div className="gover">
-                <Link href={`/games/${game.id}`} className="btn btn-primary animate-scale-in">
-                  Play Now
-                </Link>
-              </div>
-              <div className={`badge badge-${game.category} absolute top-3 right-3 text-2xs`}>
-                {game.category}
-              </div>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  toggleFavorite(game.id, game.isFavorite);
-                }}
-                className="absolute top-3 left-3 w-8 h-8 rounded-full bg-portal-bg-base/60 backdrop-blur-sm text-sm opacity-0 group-hover:opacity-100 transition-all hover:scale-110 border border-portal-border/50 hover:border-portal-gold/50"
-              >
-                {game.isFavorite ? "" : ""}
-              </button>
+      {/* Games Table/Grid */}
+      <div className="frame">
+        <div className="frame-inner p-0">
+          {filteredGames.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-4xl mb-3">🔮</div>
+              <p className="text-guild-text-dim">No games found matching your criteria.</p>
             </div>
-            <div className="card-body">
-              <Link href={`/games/${game.id}`}>
-                <h3 className="text-base font-semibold text-portal-text-primary group-hover:text-portal-gold transition-colors">
-                  {game.title}
-                </h3>
-              </Link>
-              <p className="text-xs text-portal-text-muted mt-1.5 line-clamp-2">
-                {game.description}
-              </p>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-portal-border/30">
-                <span className="text-xs text-portal-text-dim">
-                  {game.controls === "keyboard" ? "" : ""} {game.controls}
-                </span>
-                <div className="flex items-center gap-3 text-xs text-portal-text-dim">
-                  <span title="Rating"> {game.rating.toFixed(1)}</span>
-                  <span title="Plays"> {game.plays}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {filteredGames.length === 0 && (
-        <div className="text-center py-16">
-          <div className="text-5xl mb-4 opacity-30"></div>
-          <p className="text-portal-text-muted">No games found matching your criteria.</p>
-          <button
-            onClick={() => {
-              setSearchQuery("");
-              setActiveCategory("all");
-              setFavoritesOnly(false);
-            }}
-            className="btn btn-secondary mt-4"
-          >
-            Clear Filters
-          </button>
+          ) : (
+            <table className="guild-table">
+              <thead>
+                <tr>
+                  <th style={{ width: "40px" }}>#</th>
+                  <th style={{ width: "50px" }}>Icon</th>
+                  <th>Game</th>
+                  <th style={{ width: "80px" }}>Category</th>
+                  <th style={{ width: "70px" }}>Rating</th>
+                  <th style={{ width: "70px" }}>Plays</th>
+                  <th style={{ width: "60px" }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredGames.map((game, i) => (
+                  <tr key={game.id}>
+                    <td className="text-guild-gold font-mono">{i + 1}.</td>
+                    <td className="text-2xl text-center">{game.thumbnail}</td>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-guild-text-light">{game.title}</span>
+                        <button
+                          onClick={() => toggleFavorite(game.id, game.isFavorite)}
+                          className="text-guild-gold hover:text-guild-gold-light"
+                        >
+                          {game.isFavorite ? "★" : "☆"}
+                        </button>
+                      </div>
+                      <p className="text-xs text-guild-text-dim mt-1 line-clamp-1">{game.description}</p>
+                    </td>
+                    <td>
+                      <span className={`badge badge-${game.category === "puzzle" ? "sapphire" : game.category === "rpg" ? "amethyst" : game.category === "strategy" ? "gold" : "emerald"}`}>
+                        {game.category}
+                      </span>
+                    </td>
+                    <td className="text-center font-mono text-guild-gold">{game.rating.toFixed(1)}</td>
+                    <td className="text-center font-mono">{game.plays}</td>
+                    <td>
+                      <Link href={`/games/${game.id}`} className="btn btn-gold text-xs px-3">
+                        Play
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

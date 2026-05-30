@@ -20,7 +20,6 @@ interface User {
 export default function PortalShell({ children, user }: { children: React.ReactNode; user: User }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -31,160 +30,115 @@ export default function PortalShell({ children, user }: { children: React.ReactN
   };
 
   const navItems = [
-    { href: "/dashboard", label: "Portal Hub", icon: "home", emoji: "" },
-    { href: "/games", label: "Games Realm", icon: "game", emoji: "" },
-    { href: "/leaderboard", label: "Leaderboard", icon: "trophy", emoji: "" },
-    { href: "/music", label: "Bard's Hall", icon: "music", emoji: "" },
-    { href: "/search", label: "Arcane Search", icon: "search", emoji: "" },
-    { href: "/chat", label: "Chat Tavern", icon: "message", emoji: "" },
-    { href: "/profile", label: "Character", icon: "user", emoji: "" },
+    { href: "/dashboard", label: "Hub", icon: "[H]" },
+    { href: "/games", label: "Arcade", icon: "[A]" },
+    { href: "/leaderboard", label: "Ranks", icon: "[R]" },
+    { href: "/music", label: "Music", icon: "[M]" },
+    { href: "/search", label: "Search", icon: "[S]" },
+    { href: "/chat", label: "Chat", icon: "[C]" },
+    { href: "/profile", label: "Profile", icon: "[P]" },
   ];
 
   const dn = user.displayName || user.username;
 
   if (!mounted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-portal-bg">
+      <div className="min-h-screen bg-guild-bg flex items-center justify-center">
         <div className="loader" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-realm">
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed top-4 left-4 z-50 lg:hidden p-3 rounded-xl bg-portal-bg-surface border border-portal-border hover:bg-portal-bg-overlay transition-colors"
-        aria-label="Toggle menu"
-      >
-        <svg className="w-6 h-6 text-portal-text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          {sidebarOpen ? (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          )}
-        </svg>
-      </button>
-
-      {/* Sidebar */}
-      <aside
-        className={`sidebar ${sidebarOpen ? "open" : ""} lg:translate-x-0`}
-      >
-        {/* Logo */}
-        <Link href="/dashboard" className="flex items-center gap-3 p-6 border-b border-portal-border">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-portal-gold to-portal-gold-dark flex items-center justify-center text-2xl shadow-glow-gold">
-
-          </div>
-          <div>
-            <h1 className="text-lg font-rune text-portal-gold">RUNEGATE</h1>
-            <p className="text-2xs text-portal-text-dim font-mono">v2.0</p>
-          </div>
-        </Link>
-
-        {/* Navigation */}
-        <nav className="sidebar-nav">
-          {navItems.map((item) => {
-            const isActive = pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`sidebar-item ${isActive ? "active" : ""}`}
-              >
-                <span className="icon text-lg">
-                  {item.href === "/dashboard" && ""}
-                  {item.href === "/games" && ""}
-                  {item.href === "/leaderboard" && ""}
-                  {item.href === "/music" && ""}
-                  {item.href === "/search" && ""}
-                  {item.href === "/chat" && ""}
-                  {item.href === "/profile" && ""}
-                </span>
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* User Profile Footer */}
-        <div className="sidebar-footer">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="avatar">
-              {user.profileImage ? (
-                <img src={user.profileImage} alt="" />
-              ) : (
-                <span className="text-portal-gold text-lg">
-                  {user.avatar === "wizard" ? "" : ""}
-                </span>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-portal-text-primary truncate">{dn}</p>
-              <p className="text-xs text-portal-text-muted truncate">@{user.username}</p>
-            </div>
-          </div>
-
-          {/* XP Progress */}
-          <div className="mb-3">
-            <div className="flex justify-between text-xs mb-1">
-              <span className="text-portal-text-muted">Level {user.level}</span>
-              <span className="text-portal-gold font-mono">{user.xp.toLocaleString()} XP</span>
-            </div>
-            <div className="progress-bar progress-gold">
-              <div
-                className="progress-fill"
-                style={{ width: `${Math.min((user.xp % 1000) / 10, 100)}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Gold Display */}
-          <div className="flex items-center justify-between mb-3 px-3 py-2 rounded-lg bg-portal-bg-base border border-portal-border">
-            <span className="text-xs text-portal-text-muted">Gold</span>
-            <span className="text-sm font-bold text-portal-gold font-mono">
-              {user.gold.toLocaleString()}
-            </span>
-          </div>
-
-          {/* Logout Button */}
-          <button
-            onClick={handleLogout}
-            className="btn btn-ghost w-full text-sm justify-start"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Exit Portal
-          </button>
+    <div className="min-h-screen bg-guild-bg">
+      {/* Top Header */}
+      <header className="bg-guild-bg-header border-b-2 border-guild-border">
+        {/* Marquee Banner */}
+        <div className="marquee">
+          <span className="marquee-content">
+            ★ Welcome to RuneGate v2.0 ★ The realm awaits, brave adventurer ★ New: Bard's Hall with 16 music stations ★ Compete on the Leaderboard ★ Join the Chat Tavern ★
+          </span>
         </div>
-      </aside>
 
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+        {/* Logo & Title */}
+        <div className="border-b border-guild-border">
+          <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <Link href="/dashboard" className="flex items-center gap-4 group">
+              <div className="icon-box icon-box-gold text-xl">
+                ⚔
+              </div>
+              <div>
+                <h1 className="font-rune text-2xl text-guild-gold glow-gold tracking-wider">
+                  RUNEGATE
+                </h1>
+                <p className="font-mono text-2xs text-guild-text-dim">
+                  [ Fantasy Portal v2.0 ]
+                </p>
+              </div>
+            </Link>
+
+            <div className="flex items-center gap-4">
+              {/* User Info Box */}
+              <div className="frame frame-gold px-3 py-1 hidden sm:block">
+                <div className="flex items-center gap-3">
+                  <div className="avatar-frame avatar-frame-gold w-8 h-8">
+                    <div className="avatar-inner w-full h-full flex items-center justify-center text-sm">
+                      {user.profileImage ? (
+                        <img src={user.profileImage} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{user.avatar === "wizard" ? "🧙" : "👤"}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-sm text-guild-text-light">{dn}</div>
+                    <div className="text-2xs text-guild-gold">Lv.{user.level} • {user.gold} Gold</div>
+                  </div>
+                </div>
+              </div>
+
+              <button onClick={handleLogout} className="btn btn-blood text-2xs">
+                [X] Exit
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Bar */}
+        <nav className="nav-bar max-w-6xl mx-auto px-4">
+          {navItems.map((item, index) => (
+            <span key={item.href}>
+              <Link
+                href={item.href}
+                className={`nav-item ${pathname.startsWith(item.href) ? "active" : ""}`}
+              >
+                <span className="text-guild-gold">{item.icon}</span> {item.label}
+              </Link>
+              {index < navItems.length - 1 && <span className="nav-divider">|</span>}
+            </span>
+          ))}
+        </nav>
+      </header>
 
       {/* Main Content */}
-      <main className="main-content">
-        <div className="p-4 lg:p-8">
-          {children}
-        </div>
-
-        {/* Footer */}
-        <footer className="border-t border-portal-border py-4 px-6 mt-8">
-          <div className="portal-container flex items-center justify-between text-xs text-portal-text-dim font-mono">
-            <span>RuneGate v2.0 - Private Portal</span>
-            <span className="flex items-center gap-2">
-              <span className="animate-float">The realm awaits</span>
-            </span>
-          </div>
-        </footer>
+      <main className="max-w-6xl mx-auto px-4 py-4">
+        {children}
       </main>
+
+      {/* Footer */}
+      <footer className="footer mt-8">
+        <div className="divider-ornate" />
+        <p className="text-guild-gold">
+          ★ RuneGate Fantasy Portal ★
+        </p>
+        <p className="mt-1">
+          © MMXXVI • All Rights Reserved • Best viewed in 1024x768
+        </p>
+        <div className="divider-gold my-2 max-w-xs mx-auto" />
+        <p className="font-mono">
+          [ Visitors: <span className="text-guild-gold">{Math.floor(Math.random() * 10000)}</span> ]
+        </p>
+      </footer>
     </div>
   );
 }
