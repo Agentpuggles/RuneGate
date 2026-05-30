@@ -13,18 +13,9 @@ interface MostPlayedGame {
   playCount: number;
 }
 
-interface LeaderboardEntry {
-  rank: number;
-  username: string;
-  avatar: string;
-  score: number;
-  date: string;
-}
-
 export default function LeaderboardClient() {
   const [mostPlayed, setMostPlayed] = useState<MostPlayedGame[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"played" | "scores">("played");
 
   useEffect(() => {
     const fetchLB = async () => {
@@ -32,49 +23,73 @@ export default function LeaderboardClient() {
         const res = await fetch("/api/leaderboard");
         const data = await res.json();
         if (data.mostPlayed) setMostPlayed(data.mostPlayed);
-      } catch {}
+      } catch {
+        // Handle error silently
+      }
       setLoading(false);
     };
     fetchLB();
   }, []);
 
-  const catBadge: Record<string, string> = { puzzle: "b-puzzle", strategy: "b-strategy", rpg: "b-rpg", arcade: "b-arcade", multiplayer: "b-multi" };
-
   return (
-    <div className="anim-in">
-      <div className="flex items-center gap-3 mb-4">
-        <h1 className="text-xl t-title flex items-center gap-2">🏆 Leaderboard</h1>
-        <span className="t-dim text-xs font-mono">Hall of Fame</span>
+    <div className="animate-fade-in space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-rune text-portal-gold">Leaderboard</h1>
+          <p className="text-sm text-portal-text-muted">Hall of Fame</p>
+        </div>
       </div>
 
-      {/* Top section: Most Played */}
-      <div className="fp mb-4">
-        <div className="fp-head"><span>🔥</span><h3>Most Played</h3></div>
-        <div className="fp-body">
+      {/* Most Played */}
+      <div className="panel">
+        <div className="panel-header">
+          <span className="icon"></span>
+          <h3>Most Played Games</h3>
+        </div>
+        <div className="panel-body">
           {loading ? (
-            <div className="flex justify-center py-8"><div className="rloader" /></div>
+            <div className="flex justify-center py-12">
+              <div className="loader" />
+            </div>
           ) : mostPlayed.length === 0 ? (
-            <div className="text-center py-8 t-dim text-sm">No games played yet. Be the first!</div>
+            <div className="text-center py-12">
+              <div className="text-5xl mb-4 opacity-30"></div>
+              <p className="text-portal-text-muted">No games played yet. Be the first!</p>
+              <Link href="/games" className="btn btn-primary mt-4">
+                Go to Arcade
+              </Link>
+            </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {mostPlayed.map((game, i) => (
-                <Link key={game.id} href={`/games/${game.id}`} className="lb-row lb-top group">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                    style={{
-                      background: i === 0 ? "linear-gradient(135deg, #c9a84c, #ffd84d)" : i === 1 ? "linear-gradient(135deg, #888, #aaa)" : i === 2 ? "linear-gradient(135deg, #8a6d3b, #b8935a)" : "var(--bg-dark)",
-                      color: i < 3 ? "#1a1510" : "var(--text-dim)",
-                      border: "1px solid var(--border-light)",
-                    }}>
+                <Link key={game.id} href={`/games/${game.id}`} className="leaderboard-row group">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
+                      i < 3 ? "shadow-lg" : "bg-portal-bg-elevated border border-portal-border"
+                    }`}
+                    style={
+                      i === 0
+                        ? { background: "linear-gradient(135deg, #fbbf24, #f59e0b)", color: "#0a0e1a" }
+                        : i === 1
+                          ? { background: "linear-gradient(135deg, #94a3b8, #64748b)", color: "#fff" }
+                          : i === 2
+                            ? { background: "linear-gradient(135deg, #c2410c, #9a3412)", color: "#fff" }
+                            : {}
+                    }
+                  >
                     {i + 1}
                   </div>
-                  <img src={game.image || ""} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                  <img src={game.image || ""} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold t-cream group-hover:t-gold transition-colors">{game.thumbnail} {game.title}</div>
-                    <div className="text-[10px] t-dim">{game.category}</div>
+                    <div className="text-base font-semibold text-portal-text-primary group-hover:text-portal-gold transition-colors">
+                      {game.thumbnail} {game.title}
+                    </div>
+                    <div className="badge badge-arcade mt-1">{game.category}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="text-sm font-bold t-gold">{game.playCount}</div>
-                    <div className="text-[9px] t-dim">plays</div>
+                    <div className="text-lg font-bold text-portal-gold font-mono">{game.playCount}</div>
+                    <div className="text-xs text-portal-text-dim">plays</div>
                   </div>
                 </Link>
               ))}
@@ -83,65 +98,63 @@ export default function LeaderboardClient() {
         </div>
       </div>
 
-      {/* Achievements / Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="fp">
-          <div className="fp-head"><span>⚔️</span><h3>Play Games to Earn Ranks</h3></div>
-          <div className="fp-body">
-            <p className="text-xs t-dim mb-3">Every game you play earns XP and gold. Compete for the top of the leaderboard!</p>
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: "#c9a84c", color: "#1a1510" }}>1</span>
-                <span className="t-cream">Initiate — Play 1 game</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: "#5da06a", color: "#fff" }}>5</span>
-                <span className="t-cream">Apprentice — Play 5 games</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: "#5882b0", color: "#fff" }}>10</span>
-                <span className="t-cream">Adept — Play 10 games</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: "#8b6cc4", color: "#fff" }}>20</span>
-                <span className="t-cream">Veteran — Play 20 games</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: "#c48840", color: "#fff" }}>50</span>
-                <span className="t-cream">Legend — Play 50 games</span>
-              </div>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="panel">
+          <div className="panel-header">
+            <span className="icon"></span>
+            <h3>Earn Ranks</h3>
+          </div>
+          <div className="panel-body">
+            <p className="text-sm text-portal-text-secondary mb-4">
+              Every game you play earns XP and gold. Compete for the top of the leaderboard!
+            </p>
+            <div className="space-y-3">
+              {[
+                { level: 1, name: "Initiate", color: "#64748b" },
+                { level: 5, name: "Apprentice", color: "#10b981" },
+                { level: 10, name: "Adept", color: "#3b82f6" },
+                { level: 20, name: "Veteran", color: "#a855f7" },
+                { level: 50, name: "Legend", color: "#f59e0b" },
+              ].map((rank) => (
+                <div key={rank.level} className="flex items-center gap-3">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                    style={{ background: rank.color }}
+                  >
+                    {rank.level}
+                  </div>
+                  <span className="text-sm text-portal-text-secondary">{rank.name} — Play {rank.level} game{rank.level > 1 ? "s" : ""}</span>
+                </div>
+              ))}
             </div>
-            <Link href="/games" className="btn btn-g mt-4 text-xs w-full justify-center">🎮 Go to Arcade</Link>
+            <Link href="/games" className="btn btn-primary w-full mt-6">
+              Go to Arcade
+            </Link>
           </div>
         </div>
 
-        <div className="fp">
-          <div className="fp-head"><span>📊</span><h3>Quick Stats</h3></div>
-          <div className="fp-body space-y-3">
-            <div className="flex justify-between items-center text-sm">
-              <span className="t-dim">Total Games Available</span>
-              <span className="t-cream font-bold">10</span>
-            </div>
-            <hr className="divider" />
-            <div className="flex justify-between items-center text-sm">
-              <span className="t-dim">Music Stations</span>
-              <span className="t-cream font-bold">16</span>
-            </div>
-            <hr className="divider" />
-            <div className="flex justify-between items-center text-sm">
-              <span className="t-dim">Chat Channels</span>
-              <span className="t-cream font-bold">6</span>
-            </div>
-            <hr className="divider" />
-            <div className="flex justify-between items-center text-sm">
-              <span className="t-dim">Avatars</span>
-              <span className="t-cream font-bold">16</span>
-            </div>
-            <hr className="divider" />
-            <div className="flex justify-between items-center text-sm">
-              <span className="t-dim">Titles</span>
-              <span className="t-cream font-bold">16</span>
-            </div>
+        <div className="panel">
+          <div className="panel-header">
+            <span className="icon"></span>
+            <h3>Portal Stats</h3>
+          </div>
+          <div className="panel-body space-y-4">
+            {[
+              { label: "Total Games Available", value: "10" },
+              { label: "Music Stations", value: "16" },
+              { label: "Chat Channels", value: "6" },
+              { label: "Avatars", value: "16" },
+              { label: "Titles", value: "16" },
+            ].map((stat, i) => (
+              <div key={i}>
+                <div className="flex justify-between items-center">
+                  <span className="text-portal-text-muted">{stat.label}</span>
+                  <span className="text-lg font-bold text-portal-text-primary font-mono">{stat.value}</span>
+                </div>
+                {i < 4 && <div className="divider" />}
+              </div>
+            ))}
           </div>
         </div>
       </div>

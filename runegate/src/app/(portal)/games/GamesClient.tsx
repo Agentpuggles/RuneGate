@@ -4,28 +4,44 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 
 interface Game {
-  id: string; title: string; slug: string; description: string; category: string;
-  thumbnail: string; image: string; embedUrl: string; controls: string;
-  rating: number; plays: number; isFavorite: boolean;
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  category: string;
+  thumbnail: string;
+  image: string;
+  embedUrl: string;
+  controls: string;
+  rating: number;
+  plays: number;
+  isFavorite: boolean;
 }
 
-const cats = [
-  { id: "all", label: "All Games", icon: "✨" },
-  { id: "puzzle", label: "Puzzle", icon: "🧩" },
-  { id: "strategy", label: "Strategy", icon: "♟️" },
-  { id: "rpg", label: "RPG", icon: "⚔️" },
-  { id: "arcade", label: "Arcade", icon: "🕹️" },
+const categories = [
+  { id: "all", label: "All Games", icon: "sparkles" },
+  { id: "puzzle", label: "Puzzle", icon: "puzzle" },
+  { id: "strategy", label: "Strategy", icon: "chess" },
+  { id: "rpg", label: "RPG", icon: "sword" },
+  { id: "arcade", label: "Arcade", icon: "joystick" },
 ];
 
-const cb: Record<string, string> = { puzzle: "b-puzzle", strategy: "b-strategy", rpg: "b-rpg", arcade: "b-arcade" };
+const iconMap: Record<string, string> = {
+  all: "",
+  sparkles: "",
+  puzzle: "",
+  chess: "",
+  sword: "",
+  joystick: "",
+};
 
 export default function GamesClient() {
   const [games, setGames] = useState<Game[]>([]);
   const [recent, setRecent] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeCat, setActiveCat] = useState("all");
-  const [search, setSearch] = useState("");
-  const [favOnly, setFavOnly] = useState(false);
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
 
   const fetchGames = useCallback(async () => {
     try {
@@ -34,46 +50,101 @@ export default function GamesClient() {
       if (data.games) {
         setGames(data.games);
         const ids = data.recentGameIds || [];
-        setRecent(ids.map((id: string) => data.games.find((g: Game) => g.id === id)).filter(Boolean));
+        setRecent(
+          ids
+            .map((id: string) => data.games.find((g: Game) => g.id === id))
+            .filter(Boolean)
+        );
       }
-    } catch {} finally { setLoading(false); }
+    } catch {
+      // Handle error silently
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { fetchGames(); }, [fetchGames]);
+  useEffect(() => {
+    fetchGames();
+  }, [fetchGames]);
 
-  const toggleFav = async (gameId: string, isFav: boolean) => {
+  const toggleFavorite = async (gameId: string, isFavorite: boolean) => {
     try {
-      await fetch("/api/games/favorites", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gameId, action: isFav ? "remove" : "add" }) });
-      setGames((p) => p.map((g) => (g.id === gameId ? { ...g, isFavorite: !isFav } : g)));
-    } catch {}
+      await fetch("/api/games/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gameId,
+          action: isFavorite ? "remove" : "add",
+        }),
+      });
+      setGames((prev) =>
+        prev.map((g) =>
+          g.id === gameId ? { ...g, isFavorite: !isFavorite } : g
+        )
+      );
+    } catch {
+      // Handle error silently
+    }
   };
 
-  const filtered = games.filter((g) => {
-    if (activeCat !== "all" && g.category !== activeCat) return false;
-    if (favOnly && !g.isFavorite) return false;
-    if (search) { const q = search.toLowerCase(); return g.title.toLowerCase().includes(q) || g.description.toLowerCase().includes(q); }
+  const filteredGames = games.filter((game) => {
+    if (activeCategory !== "all" && game.category !== activeCategory) return false;
+    if (favoritesOnly && !game.isFavorite) return false;
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return (
+        game.title.toLowerCase().includes(query) ||
+        game.description.toLowerCase().includes(query)
+      );
+    }
     return true;
   });
 
-  if (loading) return <div className="flex justify-center py-20"><div className="rloader" /></div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <div className="loader" />
+      </div>
+    );
+  }
 
   return (
-    <div className="anim-in">
-      <div className="flex items-center gap-3 mb-4">
-        <h1 className="text-xl t-title flex items-center gap-2">🎮 Games Realm</h1>
-        <span className="t-dim text-xs font-mono">Arcane Arcade</span>
+    <div className="animate-fade-in space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-rune text-portal-gold">Games Realm</h1>
+          <p className="text-sm text-portal-text-muted">Arcane Arcade - {games.length} games available</p>
+        </div>
       </div>
 
-      {/* Recently played */}
+      {/* Recently Played */}
       {recent.length > 0 && (
-        <div className="fp mb-4">
-          <div className="fp-head"><span>⏱</span><h3>Recently Played</h3></div>
-          <div className="fp-body">
-            <div className="flex gap-3 overflow-x-auto pb-1">
-              {recent.slice(0, 8).map((g) => (
-                <Link key={g.id} href={`/games/${g.id}`} className="flex-shrink-0 w-32 group">
-                  <img src={g.image || ""} alt="" className="w-full h-20 rounded object-cover mb-1.5 group-hover:brightness-125 transition-all" loading="lazy" />
-                  <div className="text-xs font-medium t-cream truncate group-hover:t-gold transition-colors">{g.title}</div>
+        <div className="panel">
+          <div className="panel-header">
+            <span className="icon"></span>
+            <h3>Recently Played</h3>
+          </div>
+          <div className="panel-body">
+            <div className="flex gap-4 overflow-x-auto pb-2">
+              {recent.slice(0, 8).map((game) => (
+                <Link
+                  key={game.id}
+                  href={`/games/${game.id}`}
+                  className="flex-shrink-0 w-36 group"
+                >
+                  <div className="relative rounded-lg overflow-hidden mb-2">
+                    <img
+                      src={game.image || ""}
+                      alt=""
+                      className="w-full h-20 object-cover transition-transform group-hover:scale-110"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-portal-bg-base/0 group-hover:bg-portal-bg-base/30 transition-colors" />
+                  </div>
+                  <div className="text-sm font-medium text-portal-text-primary group-hover:text-portal-gold transition-colors truncate">
+                    {game.title}
+                  </div>
                 </Link>
               ))}
             </div>
@@ -82,63 +153,119 @@ export default function GamesClient() {
       )}
 
       {/* Filters */}
-      <div className="fp mb-4">
-        <div className="fp-head"><span>🔍</span><h3>Browse Games</h3></div>
-        <div className="fp-body">
-          <div className="flex gap-3 mb-3">
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search for a spell..." className="inp flex-1" />
-            <button onClick={() => setFavOnly(!favOnly)} className={`btn ${favOnly ? "btn-g" : "btn-p"} text-xs cursor-pointer`}>
-              ⭐ {favOnly ? "All" : "Favorites"}
+      <div className="panel">
+        <div className="panel-header">
+          <span className="icon"></span>
+          <h3>Browse Games</h3>
+        </div>
+        <div className="panel-body space-y-4">
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search for a game..."
+              className="input flex-1"
+            />
+            <button
+              onClick={() => setFavoritesOnly(!favoritesOnly)}
+              className={`btn ${favoritesOnly ? "btn-primary" : "btn-secondary"} flex-shrink-0`}
+            >
+              {favoritesOnly ? "" : ""} Favorites
             </button>
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {cats.map((c) => (
-              <button key={c.id} onClick={() => setActiveCat(c.id)}
-                className={`px-3 py-1 rounded text-xs font-medium cursor-pointer transition-all ${
-                  activeCat === c.id ? "t-gold border" : "t-dim hover:t-cream border border-transparent"
-                }`}
-                style={activeCat === c.id ? { background: "rgba(201,168,76,0.1)", borderColor: "var(--gold-dim)" } : {}}>
-                {c.icon} {c.label}
+
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                className={`btn ${activeCategory === cat.id ? "btn-primary" : "btn-ghost"}`}
+              >
+                {iconMap[cat.icon]} {cat.label}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Games grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-        {filtered.map((g) => (
-          <div key={g.id} className="gcard group">
+      {/* Games Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {filteredGames.map((game) => (
+          <div key={game.id} className="gcard group">
             <div className="relative">
-              <img src={g.image || ""} alt={g.title} className="gimg" loading="lazy"
-                onError={(e) => { (e.target as HTMLImageElement).src = ""; (e.target as HTMLImageElement).style.background = "linear-gradient(135deg, #1a2040, #0e1220)"; }} />
+              <img
+                src={game.image || ""}
+                alt={game.title}
+                className="gimg"
+                loading="lazy"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "";
+                  (e.target as HTMLImageElement).style.background =
+                    "linear-gradient(135deg, #141a2e, #0a0e1a)";
+                }}
+              />
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-4xl drop-shadow-lg">{g.thumbnail}</span>
+                <span className="text-5xl drop-shadow-lg opacity-40 group-hover:opacity-60 transition-opacity">
+                  {game.thumbnail}
+                </span>
               </div>
               <div className="gover">
-                <Link href={`/games/${g.id}`} className="btn btn-g text-xs anim-in">▶ Play</Link>
+                <Link href={`/games/${game.id}`} className="btn btn-primary animate-scale-in">
+                  Play Now
+                </Link>
               </div>
-              <div className={`badge absolute top-2 right-2 text-[9px] ${cb[g.category] || "b-arcade"}`}>{g.category}</div>
-              <button onClick={(e) => { e.preventDefault(); toggleFav(g.id, g.isFavorite); }}
-                className="absolute top-2 left-2 text-sm opacity-0 group-hover:opacity-100 transition-opacity hover:scale-125 cursor-pointer bg-black/40 rounded-full w-6 h-6 flex items-center justify-center">
-                {g.isFavorite ? "⭐" : "☆"}
+              <div className={`badge badge-${game.category} absolute top-3 right-3 text-2xs`}>
+                {game.category}
+              </div>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  toggleFavorite(game.id, game.isFavorite);
+                }}
+                className="absolute top-3 left-3 w-8 h-8 rounded-full bg-portal-bg-base/60 backdrop-blur-sm text-sm opacity-0 group-hover:opacity-100 transition-all hover:scale-110 border border-portal-border/50 hover:border-portal-gold/50"
+              >
+                {game.isFavorite ? "" : ""}
               </button>
             </div>
-            <div className="p-3">
-              <Link href={`/games/${g.id}`}><h3 className="font-semibold t-cream text-sm group-hover:t-gold transition-colors">{g.title}</h3></Link>
-              <p className="text-[10px] t-dim mt-1 line-clamp-2">{g.description}</p>
-              <div className="flex items-center justify-between text-[9px] t-dim mt-2">
-                <span>🎮 {g.controls}</span>
-                <span>⭐ {g.rating.toFixed(1)}</span>
-                <span>👥 {g.plays}</span>
+            <div className="card-body">
+              <Link href={`/games/${game.id}`}>
+                <h3 className="text-base font-semibold text-portal-text-primary group-hover:text-portal-gold transition-colors">
+                  {game.title}
+                </h3>
+              </Link>
+              <p className="text-xs text-portal-text-muted mt-1.5 line-clamp-2">
+                {game.description}
+              </p>
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-portal-border/30">
+                <span className="text-xs text-portal-text-dim">
+                  {game.controls === "keyboard" ? "" : ""} {game.controls}
+                </span>
+                <div className="flex items-center gap-3 text-xs text-portal-text-dim">
+                  <span title="Rating"> {game.rating.toFixed(1)}</span>
+                  <span title="Plays"> {game.plays}</span>
+                </div>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {filtered.length === 0 && (
-        <div className="text-center py-16 t-dim"><div className="text-3xl mb-2">🔮</div><p className="font-mono text-sm">No spells found.</p></div>
+      {filteredGames.length === 0 && (
+        <div className="text-center py-16">
+          <div className="text-5xl mb-4 opacity-30"></div>
+          <p className="text-portal-text-muted">No games found matching your criteria.</p>
+          <button
+            onClick={() => {
+              setSearchQuery("");
+              setActiveCategory("all");
+              setFavoritesOnly(false);
+            }}
+            className="btn btn-secondary mt-4"
+          >
+            Clear Filters
+          </button>
+        </div>
       )}
     </div>
   );

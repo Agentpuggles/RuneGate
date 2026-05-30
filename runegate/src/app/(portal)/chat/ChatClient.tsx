@@ -25,23 +25,23 @@ interface ChatMessage {
 }
 
 const avatarEmojis: Record<string, string> = {
-  wizard: "🧙",
-  warrior: "⚔️",
-  rogue: "🗡️",
-  archer: "🏹",
-  healer: "✨",
-  dragon: "🐉",
-  ghost: "👻",
-  knight: "🛡️",
-  bard: "🎵",
-  necro: "💀",
-  demon: "😈",
-  angel: "😇",
-  vampire: "🧛",
-  elf: "🧝",
-  dwarf: "⛏️",
-  cyber: "🤖",
-  default: "👤",
+  wizard: "",
+  warrior: "",
+  rogue: "",
+  archer: "",
+  healer: "",
+  dragon: "",
+  ghost: "",
+  knight: "",
+  bard: "",
+  necro: "",
+  demon: "",
+  angel: "",
+  vampire: "",
+  elf: "",
+  dwarf: "",
+  cyber: "",
+  default: "",
 };
 
 function getDisplayName(u: ChatUser): string {
@@ -150,39 +150,39 @@ export default function ChatClient({ username }: { username: string; userId: str
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <div className="rloader" />
+        <div className="loader" />
       </div>
     );
   }
 
   return (
-    <div className="anim-in">
-      <div className="flex items-center gap-3 mb-4">
-        <h1 className="text-xl t-title flex items-center gap-2">💬 Chat Tavern</h1>
-        <span className="t-dim text-xs font-mono">The Gathering Hall</span>
+    <div className="animate-fade-in space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-rune text-portal-gold">Chat Tavern</h1>
+          <p className="text-sm text-portal-text-muted">The Gathering Hall</p>
+        </div>
       </div>
 
-      <div className="flex gap-4" style={{ height: "calc(100vh - 200px)" }}>
+      <div className="flex gap-4" style={{ height: "calc(100vh - 220px)" }}>
         {/* Channels sidebar */}
-        <div className="w-44 flex-shrink-0 hidden md:block">
-          <div className="fp h-full">
-            <div className="fp-head">
-              <span>📢</span>
+        <div className="w-48 flex-shrink-0 hidden md:block">
+          <div className="panel h-full">
+            <div className="panel-header">
+              <span className="icon"></span>
               <h3>Channels</h3>
             </div>
-            <div className="fp-body space-y-1">
+            <div className="panel-body p-2 space-y-1">
               {channels.map((ch) => (
                 <button
                   key={ch.id}
                   onClick={() => setActiveChannel(ch.name)}
-                  className={`w-full text-left px-3 py-2 rounded-md text-xs transition-all flex items-center gap-2 cursor-pointer ${
-                    activeChannel === ch.name ? "t-gold" : "t-dim hover:t-cream"
-                  }`}
-                  style={
+                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all flex items-center gap-2 ${
                     activeChannel === ch.name
-                      ? { background: "rgba(201,168,76,0.1)", borderLeft: "2px solid var(--border-gold)" }
-                      : {}
-                  }
+                      ? "bg-portal-gold/10 text-portal-gold border-l-2 border-portal-gold"
+                      : "text-portal-text-muted hover:bg-portal-bg-elevated hover:text-portal-text-primary"
+                  }`}
                 >
                   <span>{ch.icon}</span>
                   <span>#{ch.name}</span>
@@ -194,22 +194,21 @@ export default function ChatClient({ username }: { username: string; userId: str
 
         {/* Chat area */}
         <div className="flex-1 flex flex-col">
-          <div className="fp flex-1 flex flex-col overflow-hidden">
-            <div className="fp-head">
-              <span>{channels.find((c) => c.name === activeChannel)?.icon || "💬"}</span>
+          <div className="panel flex-1 flex flex-col overflow-hidden">
+            <div className="panel-header">
+              <span>{channels.find((c) => c.name === activeChannel)?.icon || ""}</span>
               <h3>#{activeChannel}</h3>
-              <span className="t-dim text-[10px] ml-2">
+              <span className="text-xs text-portal-text-dim ml-2">
                 {channels.find((c) => c.name === activeChannel)?.description}
               </span>
-              <span className="t-dim text-[10px] ml-auto">{messages.length} messages</span>
+              <span className="text-xs text-portal-text-dim ml-auto">{messages.length} messages</span>
             </div>
 
             {/* Mobile channel select */}
             <select
               value={activeChannel}
               onChange={(e) => setActiveChannel(e.target.value)}
-              className="md:hidden mx-3 mt-2 px-2 py-1 rounded text-xs cursor-pointer"
-              style={{ background: "var(--bg-dark)", border: "1px solid var(--border-light)", color: "var(--text-main)" }}
+              className="md:hidden mx-4 mt-3 px-3 py-2 rounded-lg text-sm bg-portal-bg-base border border-portal-border text-portal-text-primary"
             >
               {channels.map((ch) => (
                 <option key={ch.id} value={ch.name}>
@@ -219,41 +218,38 @@ export default function ChatClient({ username }: { username: string; userId: str
             </select>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-1">
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {messages.length === 0 && (
-                <div className="text-center py-10 t-dim">
-                  <div className="text-2xl mb-2">🍺</div>
-                  <p className="text-sm">The tavern is quiet...</p>
+                <div className="text-center py-16">
+                  <div className="text-5xl mb-4 opacity-30"></div>
+                  <p className="text-portal-text-muted">The tavern is quiet...</p>
                 </div>
               )}
 
               {messages.map((msg) => (
-                <div key={msg.id} className="cmsg">
+                <div key={msg.id} className="chat-message">
                   {msg.type === "system" ? (
-                    <span className="italic t-dim text-xs text-center block">
+                    <span className="italic text-portal-text-dim text-xs text-center block py-2">
                       *** {msg.content} ***
                     </span>
                   ) : (
-                    <div className="flex items-start gap-2">
-                      <div
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 overflow-hidden"
-                        style={{ background: "linear-gradient(135deg, var(--gold-dim), var(--brown))" }}
-                      >
+                    <div className="flex items-start gap-3">
+                      <div className="avatar avatar-sm">
                         {renderAvatar(msg.user)}
                       </div>
-                      <div className="min-w-0">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-xs font-semibold t-link">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-2 mb-1">
+                          <span className="text-sm font-semibold text-portal-sapphire">
                             {getDisplayName(msg.user)}
                           </span>
-                          <span className="text-[9px] t-dim">
+                          <span className="text-2xs text-portal-text-dim">
                             {new Date(msg.createdAt).toLocaleTimeString([], {
                               hour: "2-digit",
                               minute: "2-digit",
                             })}
                           </span>
                         </div>
-                        <p className="text-xs t-cream-dim break-words">{msg.content}</p>
+                        <p className="text-sm text-portal-text-secondary break-words">{msg.content}</p>
                       </div>
                     </div>
                   )}
@@ -263,8 +259,8 @@ export default function ChatClient({ username }: { username: string; userId: str
             </div>
 
             {/* Input */}
-            <div className="p-3" style={{ borderTop: "1px solid var(--border-light)" }}>
-              <form onSubmit={sendMessage} className="flex gap-2">
+            <div className="p-4 border-t border-portal-border">
+              <form onSubmit={sendMessage} className="flex gap-3">
                 <input
                   type="text"
                   value={input}
@@ -281,15 +277,15 @@ export default function ChatClient({ username }: { username: string; userId: str
                     }
                   }}
                   placeholder={`Message #${activeChannel}...`}
-                  className="inp flex-1 text-xs"
+                  className="input flex-1"
                   disabled={sending}
                 />
                 <button
                   type="submit"
                   disabled={sending || !input.trim()}
-                  className="btn btn-p px-3 text-xs disabled:opacity-50 cursor-pointer"
+                  className="btn btn-primary px-4 disabled:opacity-50"
                 >
-                  ⚡
+                  Send
                 </button>
               </form>
             </div>

@@ -61,43 +61,46 @@ export default function SearchClient() {
   };
 
   const modes: { id: SearchMode; label: string; icon: string; desc: string }[] = [
-    { id: "scroll", label: "Scroll", icon: "📜", desc: "Classic result list" },
-    { id: "portal", label: "Portal", icon: "🌀", desc: "Embedded preview" },
-    { id: "terminal", label: "Terminal", icon: "💻", desc: "Hacker output" },
+    { id: "scroll", label: "Scroll", icon: "", desc: "Classic result list" },
+    { id: "portal", label: "Portal", icon: "", desc: "Embedded preview" },
+    { id: "terminal", label: "Terminal", icon: "", desc: "Hacker output" },
   ];
 
   return (
-    <div className="anim-in">
-      <div className="flex items-center gap-3 mb-4">
-        <h1 className="text-xl t-title flex items-center gap-2">🔍 Arcane Search</h1>
-        <span className="t-dim text-xs font-mono">Knowledge Proxy</span>
+    <div className="animate-fade-in space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-rune text-portal-gold">Arcane Search</h1>
+          <p className="text-sm text-portal-text-muted">Knowledge Proxy</p>
+        </div>
       </div>
 
       {/* Search bar */}
-      <div className="fp mb-4">
-        <div className="fp-head"><span>🔮</span><h3>Query the Arcane Void</h3></div>
-        <div className="fp-body">
+      <div className="panel">
+        <div className="panel-header">
+          <span className="icon"></span>
+          <h3>Query the Arcane Void</h3>
+        </div>
+        <div className="panel-body space-y-4">
           <form onSubmit={handleSearch} className="flex gap-3">
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Speak your query into the void..."
-              className="inp flex-1"
+              className="input flex-1"
             />
-            <button type="submit" disabled={loading} className="btn btn-g disabled:opacity-50 cursor-pointer">
-              {loading ? <div className="rloader !w-4 !h-4" /> : "Cast 🔮"}
+            <button type="submit" disabled={loading} className="btn btn-primary disabled:opacity-50">
+              {loading ? <div className="loader !w-5 !h-5" /> : "Search"}
             </button>
           </form>
-          <div className="flex gap-2 mt-3">
+          <div className="flex gap-2">
             {modes.map((m) => (
               <button
                 key={m.id}
                 onClick={() => setMode(m.id)}
-                className={`px-3 py-1.5 rounded text-xs font-medium cursor-pointer transition-all ${
-                  mode === m.id ? "t-gold border" : "t-dim hover:t-cream border border-transparent"
-                }`}
-                style={mode === m.id ? { background: "rgba(201,168,76,0.1)", borderColor: "var(--gold-dim)" } : {}}
+                className={`btn ${mode === m.id ? "btn-primary" : "btn-ghost"}`}
                 title={m.desc}
               >
                 {m.icon} {m.label}
@@ -108,59 +111,69 @@ export default function SearchClient() {
       </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded-md text-sm" style={{ background: "rgba(196,80,80,0.1)", border: "1px solid rgba(196,80,80,0.3)", color: "var(--red)" }}>
-          ⚠️ {error}
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-portal-ruby/10 border border-portal-ruby/30">
+          <span className="text-portal-ruby"></span>
+          <span className="text-sm text-portal-ruby">{error}</span>
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-4">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Results list */}
         <div className={`${previewUrl && mode === "portal" ? "lg:w-1/2" : "flex-1"}`}>
           {/* Scroll Mode */}
           {mode === "scroll" && results.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs t-dim font-mono">Found {results.length} scrolls</p>
+            <div className="space-y-3">
+              <p className="text-xs text-portal-text-muted font-mono">Found {results.length} results</p>
               {results.map((result, i) => (
-                <div key={i} className="fp p-3 hover:border-gold-dim transition-all">
-                  <div className="flex items-start gap-2">
-                    <span className="t-dim text-xs mt-0.5">{i + 1}.</span>
-                    <div>
-                      <a href={result.url} target="_blank" rel="noopener noreferrer"
-                        className="t-link hover:t-cream font-medium text-sm transition-colors">
+                <a
+                  key={i}
+                  href={result.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="card block p-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-portal-text-dim text-sm mt-0.5 font-mono">{i + 1}.</span>
+                    <div className="flex-1 min-w-0">
+                      <img
+                        src={`https://www.google.com/s2/favicons?domain=${domainFromUrl(result.url)}&sz=32`}
+                        alt=""
+                        className="w-4 h-4 rounded inline mr-2"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                      <span className="text-portal-sapphire hover:text-portal-sapphire-light font-medium text-sm transition-colors">
                         {result.title}
-                      </a>
-                      <p className="text-[10px] t-dim mt-0.5 truncate">{result.url}</p>
-                      <p className="text-xs t-dim mt-1">{result.snippet}</p>
+                      </span>
+                      <p className="text-xs text-portal-text-dim mt-1 truncate">{result.url}</p>
+                      <p className="text-sm text-portal-text-secondary mt-1.5">{result.snippet}</p>
                     </div>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           )}
 
-          {/* Portal Mode — click to open in portal window */}
+          {/* Portal Mode */}
           {mode === "portal" && results.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs t-dim font-mono mb-1">Click a result to open in the Portal Window →</p>
+            <div className="space-y-3">
+              <p className="text-xs text-portal-text-muted">Click a result to open in the Portal Window</p>
               {results.map((result, i) => (
                 <button
                   key={i}
                   onClick={() => openPortal(result.url)}
-                  className={`w-full text-left fp p-3 transition-all cursor-pointer ${
-                    previewUrl === result.url ? "fp-gold" : "hover:border-gold-dim"
-                  }`}
+                  className={`card w-full text-left p-4 ${previewUrl === result.url ? "panel-gold" : ""}`}
                 >
                   <div className="flex items-center gap-3">
                     <img
                       src={`https://www.google.com/s2/favicons?domain=${domainFromUrl(result.url)}&sz=32`}
                       alt=""
-                      className="w-5 h-5 rounded flex-shrink-0"
+                      className="w-5 h-5 rounded"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="t-link font-medium text-sm">{result.title}</div>
-                      <p className="text-[10px] t-dim truncate">{domainFromUrl(result.url)}</p>
-                      <p className="text-xs t-dim mt-0.5 line-clamp-1">{result.snippet}</p>
+                      <div className="text-portal-sapphire font-medium text-sm">{result.title}</div>
+                      <p className="text-xs text-portal-text-dim truncate">{domainFromUrl(result.url)}</p>
+                      <p className="text-xs text-portal-text-muted mt-1 line-clamp-1">{result.snippet}</p>
                     </div>
                   </div>
                 </button>
@@ -170,19 +183,19 @@ export default function SearchClient() {
 
           {/* Terminal Mode */}
           {mode === "terminal" && terminalOutput && (
-            <div className="fp p-4 font-mono text-sm" style={{ background: "#060812" }}>
-              <pre className="whitespace-pre-wrap leading-relaxed" style={{ color: "var(--green)", textShadow: "0 0 5px rgba(93,160,106,0.3)" }}>
+            <div className="panel p-6 font-mono text-sm bg-portal-bg-base">
+              <pre className="whitespace-pre-wrap leading-relaxed text-portal-emerald" style={{ textShadow: "0 0 5px rgba(16, 185, 129, 0.3)" }}>
                 {terminalOutput}
-                <span className="inline-block w-2 h-4 ml-1 animate-pulse" style={{ background: "var(--green)" }} />
+                <span className="inline-block w-2 h-4 ml-1 animate-pulse bg-portal-emerald" />
               </pre>
             </div>
           )}
 
           {/* Empty state */}
           {!loading && !error && results.length === 0 && !terminalOutput && (
-            <div className="text-center py-16 t-dim">
-              <div className="text-4xl mb-3">🔮</div>
-              <p className="font-mono text-sm">The void awaits your query...</p>
+            <div className="text-center py-16">
+              <div className="text-5xl mb-4 opacity-30"></div>
+              <p className="text-portal-text-muted">The void awaits your query...</p>
             </div>
           )}
         </div>
@@ -190,35 +203,30 @@ export default function SearchClient() {
         {/* Portal preview panel */}
         {mode === "portal" && previewUrl && (
           <div className="lg:w-1/2">
-            <div className="fp sticky top-16">
-              <div className="fp-head">
-                <span>🌀</span>
-                <h3 className="truncate flex-1 text-xs">{previewUrl}</h3>
-                <button onClick={() => setPreviewUrl("")} className="text-xs t-dim hover:text-red-400 cursor-pointer mr-1">✕</button>
+            <div className="panel sticky top-24">
+              <div className="panel-header">
+                <span className="icon"></span>
+                <h3 className="truncate flex-1">{previewUrl}</h3>
+                <button onClick={() => setPreviewUrl("")} className="btn btn-ghost text-sm">Close</button>
               </div>
 
-              {/* Action bar */}
-              <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid var(--border-light)" }}>
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-portal-border">
                 <a
                   href={previewUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn btn-g text-[10px] px-3 py-1 cursor-pointer"
+                  className="btn btn-primary text-xs"
                 >
-                  ↗ Open in New Tab
+                  Open in New Tab
                 </a>
-                <button
-                  onClick={openFullscreen}
-                  className="btn btn-p text-[10px] px-3 py-1 cursor-pointer"
-                >
-                  🖥 Fullscreen Window
+                <button onClick={openFullscreen} className="btn btn-secondary text-xs">
+                  Fullscreen
                 </button>
-                <span className="text-[9px] t-dim ml-auto">{domainFromUrl(previewUrl)}</span>
+                <span className="text-xs text-portal-text-dim ml-auto">{domainFromUrl(previewUrl)}</span>
               </div>
 
-              {/* Iframe preview — works for sites that allow embedding */}
-              <div className="p-1">
-                <div className="rounded overflow-hidden" style={{ height: "460px", background: "#111" }}>
+              <div className="p-2">
+                <div className="rounded-lg overflow-hidden bg-portal-bg-base" style={{ height: "480px" }}>
                   <iframe
                     src={previewUrl}
                     className="w-full h-full"
@@ -229,11 +237,10 @@ export default function SearchClient() {
                 </div>
               </div>
 
-              {/* Note about iframe blocking */}
-              <div className="px-3 py-2 text-[10px] t-dim" style={{ borderTop: "1px solid var(--border-light)" }}>
-                ⚠️ If the preview is blank, the site blocks embedding. Use{" "}
-                <strong className="t-gold">Open in New Tab</strong> or{" "}
-                <strong className="t-gold">Fullscreen Window</strong> instead.
+              <div className="px-4 py-3 border-t border-portal-border">
+                <p className="text-xs text-portal-text-muted">
+                  Note: If the preview is blank, the site blocks embedding. Use "Open in New Tab" instead.
+                </p>
               </div>
             </div>
           </div>
@@ -242,15 +249,14 @@ export default function SearchClient() {
 
       {/* Search history */}
       {searchHistory.length > 1 && (
-        <div className="mt-4">
-          <h3 className="text-xs font-mono t-dim mb-2">📜 Recent Queries</h3>
+        <div className="mt-6">
+          <h3 className="text-sm font-medium text-portal-text-muted mb-3">Recent Queries</h3>
           <div className="flex flex-wrap gap-2">
             {searchHistory.slice(1).map((q, i) => (
               <button
                 key={i}
                 onClick={() => setQuery(q)}
-                className="text-xs px-3 py-1 rounded-md t-dim hover:t-cream cursor-pointer"
-                style={{ background: "var(--bg-dark)", border: "1px solid var(--border-light)" }}
+                className="btn btn-ghost text-xs"
               >
                 {q}
               </button>
