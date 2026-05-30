@@ -37,6 +37,7 @@ export default function PortalShell({ children, user }: { children: React.ReactN
     { href: "/search", label: "Search", icon: "[S]" },
     { href: "/chat", label: "Chat", icon: "[C]" },
     { href: "/profile", label: "Profile", icon: "[P]" },
+    ...(user.username === "admin" ? [{ href: "/admin", label: "Admin", icon: "[!]" }] : []),
   ];
 
   const dn = user.displayName || user.username;

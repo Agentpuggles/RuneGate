@@ -25,7 +25,9 @@ interface ChatMessage {
 }
 
 const avatarEmojis: Record<string, string> = {
-  wizard: "🧙", warrior: "⚔", rogue: "🗡", archer: "🏹"
+  wizard: "🧙", warrior: "⚔", rogue: "🗡", archer: "🏹", healer: "✨",
+  dragon: "🐉", ghost: "👻", knight: "🛡", bard: "🎵", necro: "💀",
+  demon: "😈", angel: "😇", vampire: "🧛", elf: "🧝", dwarf: "⛏", cyber: "🤖",
 };
 
 function getDisplayName(u: ChatUser): string {
@@ -36,16 +38,16 @@ function renderAvatar(u: ChatUser) {
   if (u.profileImage) {
     return <img src={u.profileImage} alt="" className="w-full h-full object-cover" />;
   }
-  return <span>{avatarEmojis[u.avatar] || "👤"}</span>;
+  return <span className="text-2xl">{avatarEmojis[u.avatar] || "👤"}</span>;
 }
 
 export default function ChatClient({ username, userId }: { username: string; userId: string }) {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [activeChannel, setActiveChannel] = useState("lobby");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastMessageIdRef = useRef<string>("");
@@ -142,29 +144,31 @@ export default function ChatClient({ username, userId }: { username: string; use
       {/* Header */}
       <div className="frame">
         <div className="frame-header">
-          <span>💬</span> <h3>Chat Tavern — The Gathering Hall</h3>
+          <span className="text-2xl">💬</span>
+          <h3 className="text-lg">Chat Tavern — The Gathering Hall</h3>
         </div>
       </div>
 
-      <div className="flex gap-4" style={{ height: "calc(100vh - 220px)" }}>
+      <div className="flex gap-4" style={{ height: "calc(100vh - 240px)", minHeight: "500px" }}>
         {/* Channels */}
-        <div className="w-40 flex-shrink-0 hidden md:block">
+        <div className="w-48 flex-shrink-0 hidden md:block">
           <div className="frame h-full">
             <div className="frame-header">
               <span>📢</span> <h3>Channels</h3>
             </div>
-            <div className="frame-inner p-1">
+            <div className="frame-inner p-2">
               {channels.map((ch) => (
                 <button
                   key={ch.id}
                   onClick={() => setActiveChannel(ch.name)}
-                  className={`w-full text-left px-3 py-2 text-xs transition-colors border mb-1 ${
+                  className={`w-full text-left px-4 py-3 text-sm transition-colors border mb-2 ${
                     activeChannel === ch.name
                       ? "border-guild-gold bg-guild-gold bg-opacity-10 text-guild-gold"
                       : "border-transparent text-guild-text-dim hover:text-guild-text-light hover:bg-guild-bg-alt"
                   }`}
                 >
-                  {ch.icon} #{ch.name}
+                  <span className="text-xl mr-2">{ch.icon}</span>
+                  #{ch.name}
                 </button>
               ))}
             </div>
@@ -175,10 +179,10 @@ export default function ChatClient({ username, userId }: { username: string; use
         <div className="flex-1 flex flex-col">
           <div className="frame flex-1 flex flex-col">
             <div className="frame-header">
-              <span>{channels.find((c) => c.name === activeChannel)?.icon || "💬"}</span>
-              <h3>#{activeChannel}</h3>
+              <span className="text-xl">{channels.find((c) => c.name === activeChannel)?.icon || "💬"}</span>
+              <h3 className="text-base">#{activeChannel}</h3>
               <span className="ml-auto text-guild-text-dim text-xs">
-                [{messages.length} messages]
+                {channels.find((c) => c.name === activeChannel)?.description}
               </span>
             </div>
 
@@ -186,7 +190,7 @@ export default function ChatClient({ username, userId }: { username: string; use
             <select
               value={activeChannel}
               onChange={(e) => setActiveChannel(e.target.value)}
-              className="md:hidden mx-2 mt-2 bg-guild-bg border border-guild-border text-guild-text p-2 text-xs"
+              className="md:hidden mx-3 mt-3 bg-guild-bg border border-guild-border text-guild-text p-3"
             >
               {channels.map((ch) => (
                 <option key={ch.id} value={ch.name}>
@@ -196,48 +200,51 @@ export default function ChatClient({ username, userId }: { username: string; use
             </select>
 
             {/* Messages */}
-            <div className="frame-inner flex-1 overflow-y-auto p-2">
+            <div className="frame-inner flex-1 overflow-y-auto p-4">
               {messages.length === 0 && (
-                <div className="text-center py-8 text-guild-text-dim">
-                  <div className="text-3xl mb-2">🍺</div>
-                  <p className="text-xs">The tavern is quiet...</p>
+                <div className="text-center py-12 text-guild-text-dim">
+                  <div className="text-5xl mb-4">🍺</div>
+                  <p>The tavern is quiet...</p>
                 </div>
               )}
 
-              {messages.map((msg) => (
-                <div key={msg.id} className="border-b border-guild-border border-opacity-50 py-2 mb-1">
-                  {msg.type === "system" ? (
-                    <p className="text-guild-text-dim text-xs italic text-center">
-                      *** {msg.content} ***
-                    </p>
-                  ) : (
-                    <div className="flex gap-2">
-                      <div className="avatar-frame w-6 h-6 flex-shrink-0">
-                        <div className="avatar-inner w-full h-full flex items-center justify-center text-xs">
-                          {renderAvatar(msg.user)}
+              <div className="space-y-4">
+                {messages.map((msg) => (
+                  <div key={msg.id} className="border-b border-guild-border border-opacity-30 pb-3">
+                    {msg.type === "system" ? (
+                      <p className="text-guild-text-dim text-sm italic text-center py-2">
+                        *** {msg.content} ***
+                      </p>
+                    ) : (
+                      <div className="flex gap-4">
+                        {/* Large Avatar */}
+                        <div className="avatar-frame avatar-frame-gold w-14 h-14 flex-shrink-0">
+                          <div className="avatar-inner w-full h-full flex items-center justify-center">
+                            {renderAvatar(msg.user)}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-1">
+                            <span className="font-bold text-base text-guild-gold">
+                              {getDisplayName(msg.user)}
+                            </span>
+                            <span className="text-xs text-guild-text-dim font-mono">
+                              [{new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}]
+                            </span>
+                          </div>
+                          <p className="text-sm text-guild-text leading-relaxed break-words">{msg.content}</p>
                         </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-guild-gold">
-                            {getDisplayName(msg.user)}
-                          </span>
-                          <span className="text-2xs text-guild-text-dim font-mono">
-                            [{new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}]
-                          </span>
-                        </div>
-                        <p className="text-xs text-guild-text mt-1 break-words">{msg.content}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
+                    )}
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
             </div>
 
             {/* Input */}
-            <div className="border-t border-guild-border p-2">
-              <form onSubmit={sendMessage} className="flex gap-2">
+            <div className="border-t border-guild-border p-3">
+              <form onSubmit={sendMessage} className="flex gap-3">
                 <input
                   type="text"
                   value={input}
@@ -253,14 +260,14 @@ export default function ChatClient({ username, userId }: { username: string; use
                       }
                     }
                   }}
-                  placeholder={`Message #${activeChannel}...`}
-                  className="inp flex-1"
+                  placeholder={`Message #${activeChannel}... (Enter to send)`}
+                  className="inp flex-1 py-3"
                   disabled={sending}
                 />
                 <button
                   type="submit"
                   disabled={sending || !input.trim()}
-                  className="btn btn-gold disabled:opacity-50"
+                  className="btn btn-gold disabled:opacity-50 px-6"
                 >
                   Send
                 </button>

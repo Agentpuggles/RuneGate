@@ -21,7 +21,10 @@ export default function SearchClient() {
   const [error, setError] = useState("");
   const [mode, setMode] = useState<SearchMode>("scroll");
   const [terminalOutput, setTerminalOutput] = useState("");
-  const [previewUrl, setPreviewUrl] = useState("");
+  const [proxyUrl, setProxyUrl] = useState("");
+  const [proxyLoading, setProxyLoading] = useState(false);
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 
   const handleSearch = useCallback(async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -47,6 +50,13 @@ export default function SearchClient() {
       setLoading(false);
     }
   }, [query, mode]);
+
+  const openInProxy = (url: string) => {
+    setProxyLoading(true);
+    setProxyUrl(url);
+    // The proxy will handle the loading
+    setTimeout(() => setProxyLoading(false), 1000);
+  };
 
   const modes: { id: SearchMode; label: string; icon: string }[] = [
     { id: "scroll", label: "Scroll", icon: "📜" },
@@ -82,7 +92,7 @@ export default function SearchClient() {
             </button>
           </form>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {modes.map((m) => (
               <button
                 key={m.id}
@@ -92,6 +102,12 @@ export default function SearchClient() {
                 {m.icon} {m.label}
               </button>
             ))}
+          </div>
+
+          <div className="mt-3 p-2 border border-guild-border bg-guild-bg-alt">
+            <p className="text-xs text-guild-text-dim">
+              <span className="text-guild-gold">Portal Mode:</span> Opens sites in RuneGate&apos;s server-side proxy (like CroxyProxy). Browsing happens on our server, not your browser.
+            </p>
           </div>
         </div>
       </div>
@@ -104,7 +120,7 @@ export default function SearchClient() {
 
       {/* Results */}
       <div className="flex flex-col lg:flex-row gap-4">
-        <div className={`${previewUrl && mode === "portal" ? "lg:w-1/2" : "flex-1"}`}>
+        <div className={`${proxyUrl && mode === "portal" ? "lg:w-1/3" : "flex-1"}`}>
           {/* Scroll Mode */}
           {mode === "scroll" && results.length > 0 && (
             <div className="frame">
@@ -149,14 +165,17 @@ export default function SearchClient() {
                     {results.map((result, i) => (
                       <tr
                         key={i}
-                        onClick={() => setPreviewUrl(result.url)}
-                        className={`cursor-pointer ${previewUrl === result.url ? "bg-guild-gold bg-opacity-10" : ""}`}
+                        onClick={() => openInProxy(result.url)}
+                        className={`cursor-pointer hover:bg-guild-gold hover:bg-opacity-5 ${proxyUrl === result.url ? "bg-guild-gold bg-opacity-10" : ""}`}
                       >
                         <td className="text-2xl w-10 text-center">🌐</td>
                         <td>
                           <div className="font-bold text-guild-text-light">{result.title}</div>
                           <p className="text-2xs text-guild-text-dim font-mono">{domainFromUrl(result.url)}</p>
                           <p className="text-xs text-guild-text-dim mt-1 line-clamp-1">{result.snippet}</p>
+                        </td>
+                        <td className="w-20 text-right">
+                          <span className="btn btn-gold text-xs">Open</span>
                         </td>
                       </tr>
                     ))}
@@ -172,7 +191,7 @@ export default function SearchClient() {
               <div className="frame-header">
                 <span>💻</span> <h3>Terminal Output</h3>
               </div>
-              <div className="frame-inner">
+              <div className="frame-inner bg-black">
                 <pre className="font-mono text-xs text-guild-emerald whitespace-pre-wrap" style={{ textShadow: "0 0 5px rgba(0, 204, 102, 0.3)" }}>
                   {terminalOutput}
                   <span className="inline-block w-2 h-4 ml-1 animate-blink bg-guild-emerald" />
@@ -192,46 +211,73 @@ export default function SearchClient() {
           )}
         </div>
 
-        {/* Portal Preview */}
-        {mode === "portal" && previewUrl && (
-          <div className="lg:w-1/2">
-            <div className="frame">
+        {/* Proxy Portal Window */}
+        {mode === "portal" && proxyUrl && (
+          <div className="lg:w-2/3">
+            <div className="frame" style={{ minHeight: "600px" }}>
               <div className="frame-header">
-                <span>🌀</span> <h3 className="truncate">{previewUrl}</h3>
-                <button onClick={() => setPreviewUrl("")} className="btn btn-blood ml-auto text-xs">
-                  [X]
+                <span>🌀</span>
+                <h3 className="truncate flex-1">{proxyUrl}</h3>
+                <a href={proxyUrl} target="_blank" rel="noopener noreferrer" className="btn btn-std text-xs">
+                  ↗ Open Direct
+                </a>
+                <button onClick={() => setProxyUrl("")} className="btn btn-blood text-xs ml-2">
+                  ✕ Close
                 </button>
               </div>
-              <div className="frame-inner p-1">
-                <div className="flex gap-2 mb-2">
-                  <a
-                    href={previewUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-gold text-xs"
-                  >
-                    ↗ Open External
-                  </a>
-                  <span className="text-xs text-guild-text-dim font-mono self-center">
-                    [{domainFromUrl(previewUrl)}]
-                  </span>
-                </div>
-                <div className="aspect-video bg-black">
-                  <iframe
-                    src={previewUrl}
-                    className="w-full h-full"
-                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-                    title="Portal Preview"
-                    style={{ border: "none" }}
-                  />
-                </div>
-                <p className="text-2xs text-guild-text-dim mt-2">
-                  ⚠ If blank, site blocks embedding. Use "Open External".
-                </p>
+              <div className="frame-inner p-0" style={{ height: "calc(100% - 40px)" }}>
+                {proxyLoading && (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <div className="loader mx-auto mb-4" />
+                      <p className="text-guild-gold">Opening portal...</p>
+                    </div>
+                  </div>
+                )}
+                <iframe
+                  src={`${supabaseUrl}/functions/v1/web-proxy?url=${encodeURIComponent(proxyUrl)}`}
+                  className="w-full h-full"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                  title="Portal Window"
+                  style={{
+                    border: "none",
+                    display: proxyLoading ? "none" : "block"
+                  }}
+                  onLoad={() => setProxyLoading(false)}
+                />
               </div>
             </div>
           </div>
         )}
+      </div>
+
+      {/* Quick Links */}
+      <div className="frame">
+        <div className="frame-header">
+          <span>⚡</span> <h3>Quick Portal Links</h3>
+        </div>
+        <div className="frame-inner">
+          <div className="flex flex-wrap gap-2">
+            {[
+              { name: "Wikipedia", url: "https://en.wikipedia.org" },
+              { name: "Reddit", url: "https://reddit.com" },
+              { name: "YouTube", url: "https://youtube.com" },
+              { name: "GitHub", url: "https://github.com" },
+              { name: "Stack Overflow", url: "https://stackoverflow.com" },
+            ].map((site) => (
+              <button
+                key={site.url}
+                onClick={() => {
+                  setMode("portal");
+                  openInProxy(site.url);
+                }}
+                className="btn btn-std text-xs"
+              >
+                {site.name}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

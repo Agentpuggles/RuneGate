@@ -122,8 +122,8 @@ export default function ProfileClient({ user, stats }: { user: User; stats: Stat
             </div>
             <div className="frame-inner text-center">
               {/* Avatar */}
-              <div className="avatar-frame avatar-frame-gold w-20 h-20 mx-auto mb-3">
-                <div className="avatar-inner w-full h-full flex items-center justify-center text-4xl">
+              <div className="avatar-frame avatar-frame-gold w-28 h-28 mx-auto mb-4">
+                <div className="avatar-inner w-full h-full flex items-center justify-center text-6xl">
                   {pImg ? (
                     <img src={pImg} alt="" className="w-full h-full object-cover" />
                   ) : (
